@@ -2,13 +2,31 @@
 {% block content %}
     {% load static %}
     {% if user.is_authenticated %}
-        <div class="card" style="width: 18rem;">
-            <img class="card-img-top" src="{% static 'wp3_basic/imgs/scan/scanDragon.png' %}" alt="Card image cap">
-            <div class="card-body">
-                <h5 class="card-title">Start Wp3</h5>
-                <p class="card-text">Spin up wp3</p>
-                <a href="#" class="btn btn-primary">Go somewhere</a>
-            </div>
+        <div class="row">
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/scan/scanDragon.png' %}" alt="Card image cap">
+                    <div class="card-body">
+                        <h5 class="card-title">Wifi Scan</h5>
+                        <p class="card-text">Spin up wp3 Scan</p>
+                        <a href="#" class="btn btn-primary">Go somewhere</a>
+                    </div>
+                </div>
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/ap/dragon2.png' %}" alt="Card image cap">
+                    <div class="card-body">
+                        <h5 class="card-title">Access Point</h5>
+                        <p class="card-text">Spin up wp3 AP</p>
+                        <a href="#" class="btn btn-primary">Go somewhere</a>
+                    </div>
+                </div>
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
+                    <div class="card-body">
+                        <h5 class="card-title">Captive Portal</h5>
+                        <p class="card-text">Spin up wp3 Captive Portal</p>
+                        <a href="#" class="btn btn-primary">Go somewhere</a>
+                    </div>
+                </div>
         </div>
     {% else %}
         <div style="text-align:center">

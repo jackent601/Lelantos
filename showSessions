@@ -1,1 +1,1 @@
-sqlite3 db.sqlite3 'SELECT * FROM wp3_basic_activesession' -header -markdown
+sqlite3 db.sqlite3 'SELECT * FROM wp3_basic_session' -header -markdown

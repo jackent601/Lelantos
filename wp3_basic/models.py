@@ -7,10 +7,11 @@ from django.contrib.auth.models import User
 MAX_SESSION_ID=9223372036854775807
 TIME_FORMAT="%m/%d/%Y-%H:%M:%S"
 
-class ActiveSession(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class Session(models.Model):
     session_id = models.PositiveIntegerField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True)
     src_ip = models.CharField(max_length=15)
     active = models.BooleanField()
     
@@ -25,7 +26,7 @@ class ActiveSession(models.Model):
         return f"Session ({self.session_id}) started at {time_formated}, from src_ip: {self.src_ip}"
     
 def get_new_valid_session_id()->int:
-    activeIds=[s.session_id for s in ActiveSession.objects.all()]
+    activeIds=[s.session_id for s in Session.objects.all()]
     trial_id=random.randint(1,MAX_SESSION_ID)
     while trial_id in activeIds:
         trial_id+=1
@@ -33,7 +34,7 @@ def get_new_valid_session_id()->int:
     return trial_id
     
 class Wp3_Authentication_Token(models.Model):
-    session = models.ForeignKey(ActiveSession, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
     token = models.CharField(max_length=2000)
     issued_at = models.DateTimeField()
     
@@ -43,7 +44,7 @@ class Wp3_Authentication_Token(models.Model):
         return f"token ({partial_token}*...*) for session {self.session.session_id}, issued at {time_formated}"
 
 class User_Action(models.Model):
-    session = models.ForeignKey(ActiveSession, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
     placeholder = models.CharField(max_length=2000)
     time_stamp = models.DateTimeField()
     
