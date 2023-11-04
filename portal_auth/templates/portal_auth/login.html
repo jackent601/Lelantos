@@ -1,0 +1,22 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+<div style="text-align:center">
+    <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="exampleInputEmail1">User Name</label>
+        <input type="text" class="form-control" name="username" placeholder="Enter User Name">
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" class="form-control" name="password" placeholder="Password">
+    </div>
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" name="adminlogin">
+        <label class="form-check-label" for="adminlogin">Admin Login</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+</div>
+{% endblock %}
+

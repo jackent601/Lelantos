@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ["192.168.0.76"]
 # Application definition
 
 INSTALLED_APPS = [
+    'portal_auth.apps.PortalAuthConfig',
     'wp3_basic.apps.Wp3BasicConfig',
     'django.contrib.admin',
     'django.contrib.auth',
