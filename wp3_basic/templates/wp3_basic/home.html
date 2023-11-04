@@ -1,5 +1,21 @@
 {% extends "wp3_basic/base.html" %}
 {% block content %}
-    <p color="white">Creating new active session with the following -> {{ session }}</p>
+    {% load static %}
+    {% if user.is_authenticated %}
+        <div class="card" style="width: 18rem;">
+            <img class="card-img-top" src="{% static 'wp3_basic/imgs/scan/scanDragon.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">Start Wp3</h5>
+                <p class="card-text">Spin up wp3</p>
+                <a href="#" class="btn btn-primary">Go somewhere</a>
+            </div>
+        </div>
+    {% else %}
+        <div style="text-align:center">
+            <button type="submit"> 
+                <a class="nav-link" href="{% url 'login' %}" color="white">Please Login</a>
+            </button>
+        </div>
+    {% endif %}
 {% endblock %}
 

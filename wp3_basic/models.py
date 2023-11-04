@@ -2,14 +2,17 @@ from django.db import models
 from django.utils import timezone
 import datetime
 import random
+from django.contrib.auth.models import User
 
 MAX_SESSION_ID=9223372036854775807
 TIME_FORMAT="%m/%d/%Y-%H:%M:%S"
 
 class ActiveSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     session_id = models.PositiveIntegerField(primary_key=True)
     start_time = models.DateTimeField()
     src_ip = models.CharField(max_length=15)
+    active = models.BooleanField()
     
     def older_than_x_days(self, x_days):
         return self.start_time <= timezone.now() - datetime.timedelta(days=x_days)
