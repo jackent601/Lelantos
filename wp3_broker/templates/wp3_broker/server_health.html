@@ -1,0 +1,10 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+    {% if server_healthy %}
+        server running
+    {% else %}
+        server not running
+    {% endif %}
+{% endblock %}
+

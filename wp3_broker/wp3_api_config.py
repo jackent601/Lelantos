@@ -1,0 +1,13 @@
+# API Basics
+WP3_API_USERNAME="test"
+WP3_API_PASSWORD="test"
+WP3_API_IP="127.0.0.1"
+WP3_API_PORT=1337
+WP3_API_SERVER_ADDRESS="http://127.0.0.1:1337"
+WP3_API_CONNECT_TIMEOUT="10.0"
+
+# Auth Token
+WP3_API_TOKEN_EXTENSION="/api/v1/authenticate/"
+
+# AP Config
+WP3_API_AP_CONFIG_EXTENSION="/api/v1/config/accesspoint"

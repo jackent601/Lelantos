@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from wp3_basic.models import Session, get_new_valid_session_id
 from django.utils import timezone
+from django.conf import settings
 
 def login_user(request: HttpRequest):
     if request.method == "POST":
@@ -19,10 +20,14 @@ def login_user(request: HttpRequest):
             _start_time=timezone.now()
             _session_id=get_new_valid_session_id()
             session=Session(user=_user, session_id=_session_id, src_ip=_src_ip, start_time=_start_time, active=True)
-            session.save()         
+            session.save()  
+            
+            # Check wp3 available
+            t=settings.WP3_API_TOKEN_EXTENSION
+                   
             
             # Return home
-            message=messages.success(request, f"logged in, session id: {_session_id}")
+            message=messages.success(request, f"logged in, session id: {_session_id}, {t}")
             return redirect('home')
         else:
             message=messages.error(request, "Invalid login credentials.")

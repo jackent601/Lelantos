@@ -20,5 +20,6 @@ from django.urls import include, path
 urlpatterns = [
     path("", include("wp3_basic.urls")),
     path("", include("portal_auth.urls")),
+    path("", include("wp3_broker.urls")),
     path('admin/', admin.site.urls),
 ]

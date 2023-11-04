@@ -34,6 +34,7 @@ ALLOWED_HOSTS = ["192.168.0.76"]
 INSTALLED_APPS = [
     'portal_auth.apps.PortalAuthConfig',
     'wp3_basic.apps.Wp3BasicConfig',
+    'wp3_broker.apps.Wp3BrokerConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -125,3 +126,6 @@ STATICFILES_DIR = [os.path.join(BASE_DIR,"static")]
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# wp3 api settings
+from wp3_broker.wp3_api_config import *
