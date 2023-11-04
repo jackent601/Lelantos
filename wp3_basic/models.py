@@ -4,6 +4,7 @@ import datetime
 import random
 
 MAX_SESSION_ID=9223372036854775807
+TIME_FORMAT="%m/%d/%Y-%H:%M:%S"
 
 class ActiveSession(models.Model):
     session_id = models.PositiveIntegerField(primary_key=True)
@@ -17,7 +18,8 @@ class ActiveSession(models.Model):
         return self.older_than_x_days(1)
     
     def __str__(self):
-        return f"Session ({self.session_id}) started at {self.start_time}"
+        time_formated=self.start_time.strftime(TIME_FORMAT)
+        return f"Session ({self.session_id}) started at {time_formated}, from src_ip: {self.src_ip}"
     
 def get_new_valid_session_id()->int:
     activeIds=[s.session_id for s in ActiveSession.objects.all()]
@@ -34,13 +36,16 @@ class Wp3_Authentication_Token(models.Model):
     
     def __str__(self):
         partial_token=self.token[0:5]
-        return f"token ({partial_token}*...*) for session {self.session.session_id}, issued at {self.issued_at}"
+        time_formated=self.issued_at.strftime(TIME_FORMAT)
+        return f"token ({partial_token}*...*) for session {self.session.session_id}, issued at {time_formated}"
 
 class User_Action(models.Model):
+    session = models.ForeignKey(ActiveSession, on_delete=models.CASCADE)
     placeholder = models.CharField(max_length=2000)
     time_stamp = models.DateTimeField()
     
     def __str__(self):
-        return f"{self.placeholder} at {self.time_stamp}"
+        time_formated=self.time_stamp.strftime(TIME_FORMAT)
+        return f"{self.placeholder} at {time_formated}"
     
 
