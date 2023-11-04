@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ["192.168.0.76"]
 # Application definition
 
 INSTALLED_APPS = [
+    'wp3_basic.apps.Wp3BasicConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
