@@ -8,9 +8,23 @@
             <div class="card-body">
                 <h5 class="card-title">Access Point</h5>
                 <p class="card-text">
-                    {{ ap_config }}
-                </p>
-                <a href="#" class="btn btn-primary">Edit AP Config</a>
+                <a href="#" class="btn btn-primary">ToDo</a>
+                <div>
+                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#showApConfig" aria-expanded="false" aria-controls="showApConfig">
+                        AP Config
+                    </button>
+                </div>
+            </div>
+            <div class="collapse" id="showApConfig">
+                <div class="card card-body">
+                    {% for key, value in ap_config.items %}
+                        {{ key }}: {{ value }}
+                        <br>
+                    {% endfor %}
+                </div>
+                <div class="card-body">
+                    <a href="#" class="btn btn-primary">Edit</a>
+                </div>
             </div>
         </div>
     {% endif %}

@@ -1,5 +1,7 @@
+import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
+import requests
 
 from wp3_basic.models import Session
 from portal_auth.views import get_session_from_request
@@ -9,7 +11,7 @@ import wp3_broker.utils as wp3_api_utils
 def check_wp3_api_running(request):
     active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wp3 scan")
     if _error:
-        return redirect
+        return _redirect
     if active_session is None:
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
@@ -25,20 +27,17 @@ def check_wp3_api_running(request):
 
     
 def refresh_wp3_api_auth_token_for_session(request):
-    if not request.user.is_authenticated:
-        message=messages.error(request, "You must be logged in to access wp3 scan")
-        return redirect('home')
-    
-    # Get user active session to link to auth token
-    _user = request.user
-    _session = Session.objects.all().filter(user=_user, active=True).first()
-    if _session is None:
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wp3 scan")
+    if _error:
+        return _redirect
+    if active_session is None:
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
+    # Refrsh token
     # TODO - what if these get temporarily overwritten?
     api_cfg=wp3_api_utils.get_wp3_api_config_map_from_settings(True)
-    new_token, _error = wp3_api_utils.get_and_set_wp3_api_auth_token_for_session(_session, api_cfg)
+    new_token, _error = wp3_api_utils.request_and_set_wp3_api_auth_token_for_session(active_session, api_cfg)
     if _error:
         message=messages.error(request, "Failed retrieving wp3 authorization token, check server config")
         return redirect('wp3_server_health')
@@ -46,73 +45,26 @@ def refresh_wp3_api_auth_token_for_session(request):
     message=messages.success(request, f"Retrieved and set api token for session, issued at {issued_at_format}")
     return redirect('wp3_server_health')
 
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+# AP CONFIG
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 def wp3_ap_config(request):
-    return render(request, 'wp3_broker/ap.html', {"ap_config":"goes here"})
-
-# Utils
-# # Health
-# def wp3_api_running()->bool:
-#     # Unpack wp3 api settings
-#     wp3_api_ip=settings.WP3_API_IP
-#     wp3_api_port=settings.WP3_API_PORT
+    # Handle Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wp3 scan")
+    if _error:
+        return redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
     
-#     # try to connect
-#     s = socket.socket()
-#     try:
-#         s.connect((wp3_api_ip, wp3_api_port))
-#     except socket.error as msg:
-#         return False
-#     else:
-#         return True
+    api_cfg=wp3_api_utils.get_wp3_api_config_map_from_settings(True)
+    resp, _redirect, _error = wp3_api_utils.request_wp3_ap_config(request, active_session, api_cfg)
+    if _redirect is not None:
+        return _redirect
+    if _error:
+        # errored but got response, token may be expired
+        message=messages.error(request, "Server reachable but could not retrieve AP config, token may have expired, try refreshing")
+        message=messages.error(request, f"AP Config request response code: {resp.status_code}, text: {resp.text}")
+        return redirect('wp3_server_health')
 
-# # Config
-# def get_wp3_api_config_map_from_settings(check_server_running=False)->map:
-#     config_map=settings.WP3_API_DEFAULT_CONFIG_MAP
-#     if check_server_running:
-#         server_running=wp3_api_running()
-#         config_map["server_running"]=server_running
-#     return settings.WP3_API_DEFAULT_CONFIG_MAP
-
-# # Gets wp3 api authorization using api config, returns token, error
-# def get_wp3_api_auth_token(api_cfg=None)->(str, bool):
-#     if api_cfg is None:
-#         api_cfg=get_wp3_api_config_map_from_settings(check_server_running=True)
-    
-#     # username:password authorization
-#     up_base64=encode_up_combo_base64_ascii(api_cfg["wp3_api_username"], api_cfg["wp3_api_password"])
-#     auth_header={"Authorization":f"Basic {up_base64}"}
-    
-#     # token service address
-#     base_addr=api_cfg["wp3_server_address"]
-#     token_extension=api_cfg["wp3_api_token_extension"]
-#     addr=f'{base_addr}{token_extension}'
-    
-#     # get token 
-#     resp = requests.get(addr, headers=auth_header)
-#     if resp.status_code != 200:
-#         return "", True
-#     json_resp=json.loads(resp.text)
-#     return json_resp["token"], False 
-
-# # Gets ad Sets auth token returns (Wp3_Authentication_Token, error)
-# def get_and_set_wp3_api_auth_token_for_session(session: Session, api_cfg: map)->(Wp3_Authentication_Token, bool):
-#     # Get auth token to access
-#     _token, _error = get_wp3_api_auth_token(api_cfg)
-#     if _error:
-#         return None, True
-    
-#     # create obj
-#     if hasattr(session, "wp3_authentication_token"):
-#         session.wp3_authentication_token.delete()
-#     wp3_auth_token=Wp3_Authentication_Token(session=session, token=_token, issued_at=timezone.now())
-#     wp3_auth_token.save()
-#     return wp3_auth_token, False
-       
-
-# # wp3 takes 'username:password' base64 encoded to authenticate request to token service
-# def encode_up_combo_base64_ascii(username: str, password: str):
-#     up_string=f'{username}:{password}'
-#     up_string_bytes=up_string.encode("utf-8") 
-#     up_base64_bytes=base64.b64encode(up_string_bytes) 
-#     up_base64=up_base64_bytes.decode("utf-8") 
-#     return up_base64 
+    return render(request, 'wp3_broker/ap.html', {"ap_config":resp})
