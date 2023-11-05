@@ -1,11 +1,17 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.conf import settings
+from django.contrib import messages
 import socket
 
 # Makes a call to expected wp3 api to check wp3 is 'alive'
 def check_wp3_api_running(request):
-    server_running=wp3_api_running()
-    return render(request, "wp3_broker/server_health.html", {"server_healthy":server_running})
+    if request.user.is_authenticated:
+        server_running=wp3_api_running()
+        return render(request, "wp3_broker/server_health.html", {"server_healthy":server_running})
+    else:
+        message=messages.error(request, "You must be logged in to check wp3 server details")
+        return redirect('home')
+        
     
 # Utils
 def wp3_api_running()->bool:

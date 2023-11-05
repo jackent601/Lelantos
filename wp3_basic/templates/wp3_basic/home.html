@@ -4,6 +4,14 @@
     {% if user.is_authenticated %}
         <div class="row">
                 <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/server_health/serverHealth5.png' %}" alt="Card image cap">
+                    <div class="card-body">
+                        <h5 class="card-title">Wp3 Server</h5>
+                        <p class="card-text">Check Wp3 server</p>
+                        <a href="{% url 'wp3_server_health' %}" class="btn btn-primary">Go somewhere</a>
+                    </div>
+                </div>
+                <div class="card" style="width: 18rem;">
                     <img class="card-img-top" src="{% static 'wp3_basic/imgs/scan/scanDragon.png' %}" alt="Card image cap">
                     <div class="card-body">
                         <h5 class="card-title">Wifi Scan</h5>
