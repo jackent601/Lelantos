@@ -5,6 +5,7 @@ from django.contrib import messages
 from wp3_basic.models import Session, get_new_valid_session_id
 from django.utils import timezone
 from django.conf import settings
+from wp3_broker.views import wp3_api_running
 
 def login_user(request: HttpRequest):
     if request.method == "POST":
@@ -21,13 +22,14 @@ def login_user(request: HttpRequest):
             _session_id=get_new_valid_session_id()
             session=Session(user=_user, session_id=_session_id, src_ip=_src_ip, start_time=_start_time, active=True)
             session.save()  
+            message=messages.success(request, f"logged in, session id: {_session_id}") 
             
-            # Check wp3 available
-            t=settings.WP3_API_TOKEN_EXTENSION
-                   
-            
-            # Return home
-            message=messages.success(request, f"logged in, session id: {_session_id}, {t}")
+            # Check Server
+            if wp3_api_running():
+                message=messages.success(request, "wp3 server is running") 
+            else:
+                message=messages.error(request, "wp3 server is not running, start server or check server config")
+                        
             return redirect('home')
         else:
             message=messages.error(request, "Invalid login credentials.")

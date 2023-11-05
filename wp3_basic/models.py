@@ -25,16 +25,8 @@ class Session(models.Model):
         time_formated=self.start_time.strftime(TIME_FORMAT)
         return f"Session ({self.session_id}) started at {time_formated}, from src_ip: {self.src_ip}"
     
-def get_new_valid_session_id()->int:
-    activeIds=[s.session_id for s in Session.objects.all()]
-    trial_id=random.randint(1,MAX_SESSION_ID)
-    while trial_id in activeIds:
-        trial_id+=1
-        trial_id%=MAX_SESSION_ID
-    return trial_id
-    
 class Wp3_Authentication_Token(models.Model):
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    session = models.OneToOneField(Session, on_delete=models.CASCADE)
     token = models.CharField(max_length=2000)
     issued_at = models.DateTimeField()
     
@@ -51,5 +43,14 @@ class User_Action(models.Model):
     def __str__(self):
         time_formated=self.time_stamp.strftime(TIME_FORMAT)
         return f"{self.placeholder} at {time_formated}"
+    
+# Utils
+def get_new_valid_session_id()->int:
+    activeIds=[s.session_id for s in Session.objects.all()]
+    trial_id=random.randint(1,MAX_SESSION_ID)
+    while trial_id in activeIds:
+        trial_id+=1
+        trial_id%=MAX_SESSION_ID
+    return trial_id
     
 

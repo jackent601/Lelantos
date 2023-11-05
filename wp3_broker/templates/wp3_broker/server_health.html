@@ -3,36 +3,24 @@
     {% load static %}
 
     {% if user.is_authenticated %}
-        {% if server_healthy %}
-            server running
-        {% else %}
-            server not running
-        {% endif %}
-        <div class="row">
-                <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/scan/scanDragon.png' %}" alt="Card image cap">
-                    <div class="card-body">
-                        <h5 class="card-title">Wifi Scan</h5>
-                        <p class="card-text">Spin up wp3 Scan</p>
-                        <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div>
-                <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/ap/dragon2.png' %}" alt="Card image cap">
-                    <div class="card-body">
-                        <h5 class="card-title">Access Point</h5>
-                        <p class="card-text">Spin up wp3 AP</p>
-                        <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div>
-                <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
-                    <div class="card-body">
-                        <h5 class="card-title">Captive Portal</h5>
-                        <p class="card-text">Spin up wp3 Captive Portal</p>
-                        <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div>
+        <div class="card" style="width: 26rem;">
+            <img class="card-img-top" src="{% static 'wp3_basic/imgs/server_health/serverHealth5.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">Server</h5>
+                <p class="card-text">
+                    Running: {{ server_running }}<br>
+                    IP: {{ wp3_api_ip }}<br>
+                    Port: {{ wp3_api_port }}<br>
+                    Server Address: {{ wp3_server_address }}<br>
+                    Username: {{ wp3_api_username }}<br>
+                    Password: {{ wp3_api_password }}<br>
+                    Connect Timeout: {{ wp3_api_connect_timeout }}<br>
+                    Token Extension: {{ wp3_api_token_extension }}<br>
+                    AP Config Extension: {{ wp3_api_ap_config_extension }}<br>
+                </p>
+                <a href="#" class="btn btn-primary">Edit Config</a>
+                <a href="{% url 'wp3_get_api_auth_token' %}" class="btn btn-primary">Refresh API Token</a>
+            </div>
         </div>
     {% endif %}
 {% endblock %}
