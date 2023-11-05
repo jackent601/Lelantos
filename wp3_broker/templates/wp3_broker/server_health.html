@@ -30,11 +30,9 @@
             </div>
             <div class="collapse" id="collapseExample">
                 <div class="card card-body">
-                    {% if session_token %}
-                        t1
-                    {% else %}
-                        t2
-                    {% endif %}
+                        Token: {{ api_token }}
+                        <br><br>
+                        Issued at: {{ api_token_issued_at }} 
                 </div>
             </div>
         </div>

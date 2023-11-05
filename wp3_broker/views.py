@@ -15,6 +15,20 @@ import json
 def check_wp3_api_running(request):
     if request.user.is_authenticated:
         config_and_status=get_wp3_api_config_map_from_settings(check_server_running=True)
+        # TODO - avoid duplictation
+        # Get user active session to link to auth token
+        _user = request.user
+        _session = Session.objects.all().filter(user=_user, active=True).first()
+        if _session is None:
+            message=messages.error(request, "No active session for user, log out and in again to create a session")
+            return redirect('home')
+        
+        if hasattr(_session, "wp3_authentication_token"):
+            config_and_status["api_token"]=_session.wp3_authentication_token.token
+            issued_at_format=_session.wp3_authentication_token.issued_at.strftime("%m/%d/%Y, %H:%M:%S")
+            config_and_status["api_token_issued_at"]=issued_at_format
+        
+        config_and_status["session"]=_session
         return render(request, "wp3_broker/server_health.html", config_and_status)
     else:
         message=messages.error(request, "You must be logged in to check wp3 server details")
@@ -37,10 +51,10 @@ def refresh_wp3_api_auth_token_for_session(request):
     new_token, _error = get_and_set_wp3_api_auth_token_for_session(_session, api_cfg)
     if _error:
         message=messages.error(request, "Failed retrieving wp3 authorization token, check server config")
-        return render(request, "wp3_broker/server_health.html", api_cfg)
+        return redirect('wp3_server_health')
     issued_at_format=new_token.issued_at.strftime("%m/%d/%Y, %H:%M:%S")
     message=messages.success(request, f"Retrieved and set api token for session, issued at {issued_at_format}")
-    return render(request, "wp3_broker/server_health.html", api_cfg)
+    return redirect('wp3_server_health')
 
 # Utils
 # Health
