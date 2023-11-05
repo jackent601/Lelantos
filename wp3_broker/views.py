@@ -15,7 +15,6 @@ import json
 def check_wp3_api_running(request):
     if request.user.is_authenticated:
         config_and_status=get_wp3_api_config_map_from_settings(check_server_running=True)
-        
         return render(request, "wp3_broker/server_health.html", config_and_status)
     else:
         message=messages.error(request, "You must be logged in to check wp3 server details")

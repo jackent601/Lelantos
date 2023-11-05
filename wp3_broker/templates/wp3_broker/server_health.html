@@ -20,6 +20,22 @@
                 </p>
                 <a href="#" class="btn btn-primary">Edit Config</a>
                 <a href="{% url 'wp3_get_api_auth_token' %}" class="btn btn-primary">Refresh API Token</a>
+                <br>
+                <br>
+                <div>
+                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                        Show API Auth Token
+                    </button>
+                </div>
+            </div>
+            <div class="collapse" id="collapseExample">
+                <div class="card card-body">
+                    {% if session_token %}
+                        t1
+                    {% else %}
+                        t2
+                    {% endif %}
+                </div>
             </div>
         </div>
     {% endif %}
