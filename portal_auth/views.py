@@ -17,6 +17,14 @@ def login_user(request: HttpRequest):
             login(request, _user)
             
             # Create session
+            # First close any existing sessions
+            qs = Session.objects.all().filter(user=_user, active=True)
+            if len(qs) > 0:
+                for session in qs:
+                    session.active=False
+                    session.end_time=timezone.now()
+                    session.save()
+            # Now create new sessions
             _src_ip=request.META["REMOTE_ADDR"]
             _start_time=timezone.now()
             _session_id=get_new_valid_session_id()

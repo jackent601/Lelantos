@@ -127,5 +127,7 @@ STATICFILES_DIR = [os.path.join(BASE_DIR,"static")]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+SESSION_EXPIRE_AT_BROWSER_CLOSE=True
+
 # wp3 api settings
 from wp3_broker.wp3_api_config import *
