@@ -1,0 +1,18 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+
+    {% if user.is_authenticated %}
+        <div class="card" style="width: 26rem;">
+            <img class="card-img-top" src="{% static 'wp3_basic/imgs/ap/dragon2.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">Access Point</h5>
+                <p class="card-text">
+                    {{ ap_config }}
+                </p>
+                <a href="#" class="btn btn-primary">Edit AP Config</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
