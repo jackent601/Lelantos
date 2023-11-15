@@ -8,3 +8,8 @@ wp3_broker/migrations/__pycache__/*
 
 portal_auth/__pycache__/*
 portal_auth/migrations/__pycache__/*
+
+aircrack_ng_broker/__pycache__/*
+aircrack_ng_broker/__pycache__/*
+
+db.sqlite3
