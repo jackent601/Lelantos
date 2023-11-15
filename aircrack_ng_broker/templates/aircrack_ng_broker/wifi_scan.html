@@ -1,0 +1,74 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+
+    {% if user.is_authenticated %}
+        <div class="card" style="width: 38rem;">
+            <img class="card-img-top" src="{% static 'wp3_basic/imgs/scan/scanDragon.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">Scan</h5>
+                <!-- <a href="#" class="btn btn-primary">Edit Config</a>
+                <a href="#" class="btn btn-primary">Refresh API Token</a> -->
+                <em>Available Devices:</em>
+                <div>
+                    
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                            <th scope="col">Physical</th>
+                            <th scope="col">Interface</th>
+                            <th scope="col">Driver</th>
+                            <th scope="col">Chipset</th>
+                            <th scope="col">Selected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device_info in info %}
+                                <tr>
+                                    <td>{{ device_info.Phy }}</td>
+                                    <td>{{ device_info.Interface }} </td>
+                                    <td>{{ device_info.Driver }}</td>
+                                    <td>{{ device_info.Chipset }}</td>
+                                    <td>
+                                        <!--<a href="#" class="btn btn-primary">
+                                            Scan
+                                        </a>-->
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="exampleRadios" id="{{ device_info.Interface }}">
+                                            <label class="form-check-label" for="exampleRadios1">
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        </table>
+                        <div class="slidecontainer">
+                            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                                Scan
+                            </button>
+                            <em>Scan Time:</em>
+                            <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+                        </div>
+                        <br>
+                        <div>
+                            <a href="{% url 'ng_wifi_scan_home' %}" class="btn btn-primary">
+                                Refresh Devices
+                            </a>
+                        </div>
+                        <br>
+                        <br>
+                </div>
+            </div>
+            <div class="collapse" id="collapseExample">
+                <div class="card card-body">
+                        Token: 
+                        <br><br>
+                        Issued at: 
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+

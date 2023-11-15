@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'portal_auth.apps.PortalAuthConfig',
     'wp3_basic.apps.Wp3BasicConfig',
     'wp3_broker.apps.Wp3BrokerConfig',
+    'aircrack_ng_broker.apps.AircrackNgBrokerConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
