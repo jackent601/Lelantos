@@ -1,12 +1,16 @@
 from django.shortcuts import render
 import subprocess 
 
-# Create your views here.
+# VIEWS
 def ng_wifi_scan_home(request):
     wifiDevicesDetails=get_wifi_devices()
     availableDevices=[d["Interface"] for d in wifiDevicesDetails]
     return render(request, 'aircrack_ng_broker/wifi_scan.html', {"info":wifiDevicesDetails, "device_list":availableDevices})
 
+def ng_wifi_scan_results(request):
+    return render(request, 'aircrack_ng_broker/wifi_scan_results.html')
+
+# UTILS
 def get_wifi_devices():
     """
     uses airmon-ng to find available devices for scan
