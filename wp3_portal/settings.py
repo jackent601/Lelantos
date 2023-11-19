@@ -132,3 +132,14 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE=True
 
 # wp3 api settings
 from wp3_broker.wp3_api_config import *
+
+# aircrack settings
+from aircrack_ng_broker.aircrack_ng_config import *
+AIRCRACK_SCAN_RESULTS_PATH=os.path.join(BASE_DIR, AIRCRACK_REL_SCAN_DIR)
+# Make dir if not present
+if not os.path.isdir(AIRCRACK_SCAN_RESULTS_PATH):
+    # TODO - logger
+    print(f'Creating temp directory at {AIRCRACK_SCAN_RESULTS_PATH} for scan result files')
+    os.makedirs(AIRCRACK_SCAN_RESULTS_PATH)
+else:
+    print(f'Saving temp scan results to {AIRCRACK_SCAN_RESULTS_PATH}')
