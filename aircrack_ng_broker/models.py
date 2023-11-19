@@ -1,9 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from wp3_basic.models import Session
 
 class Wifi_Scan(models.Model):
-    session_id = models.PositiveIntegerField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
     start_time = models.DateTimeField()
     duration_s = models.PositiveIntegerField()
     interface = models.CharField(max_length=200)
@@ -19,7 +19,6 @@ class Wifi_Scan_Beacon_Result(models.Model):
     privacy=models.CharField(max_length=200)
     cipher=models.CharField(max_length=200)
     authentication=models.CharField(max_length=200)
-    cipher=models.CharField(max_length=200)
     power=models.IntegerField()
     num_beacons=models.IntegerField()
     num_iv=models.IntegerField()

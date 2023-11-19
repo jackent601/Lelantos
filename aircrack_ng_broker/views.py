@@ -1,15 +1,40 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf import settings
+from django.utils import timezone
+
+from aircrack_ng_broker.models import *
+from portal_auth.views import get_session_from_request
+
 import glob, os, datetime, time, subprocess
+
+DEFAULT_SCAN_TIME_s=30
+MINIMUM_SCAN_TIME_s=15
 
 # VIEWS
 def ng_wifi_scan_home(request):
+    # Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    # Devices
     wifiDevicesDetails=get_wifi_devices()
     availableDevices=[d["Interface"] for d in wifiDevicesDetails]
     return render(request, 'aircrack_ng_broker/wifi_scan.html', {"info":wifiDevicesDetails, "device_list":availableDevices})
 
 def ng_wifi_scan_results(request):
+    # Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
     # Not a post, scan not submitted, show most recent results
     if request.method != "POST":
         # Message to warn not recent
@@ -18,21 +43,36 @@ def ng_wifi_scan_results(request):
         # Return
         return render(request, 'aircrack_ng_broker/wifi_scan_results.html')
     
-    # Post -> scan requested, get details
+    # Scan
     if 'wifiInterfaceSelect' not in request.POST:
         # Message to select interface
         message=messages.error(request, "Please select an interface to start scan")
         return ng_wifi_scan_home(request)
     interface = request.POST["wifiInterfaceSelect"]
+    # TODO move to scan model
     if 'scanTime' not in request.POST:
         # default 30 seconds
-        scanTime=30
+        scanTime=DEFAULT_SCAN_TIME_s
     else:
-        scanTime=request.POST['scanTime']
+        scanTime=int(request.POST['scanTime'])
+    if scanTime < MINIMUM_SCAN_TIME_s:
+        scanTime=MINIMUM_SCAN_TIME_s
+        
+    # Create scan object for django
+    wifi_scan=Wifi_Scan(session=active_session, start_time=timezone.now(), duration_s=scanTime, interface=interface)
+    wifi_scan.save()
     
     # Run scan
-    scanResults=ng_wifi_scan(interface, 15)
-    return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"scanResults":scanResults})
+    _error, errorMsg=ng_wifi_scan(wifi_scan)
+    if _error:
+        message=messages.error(request, errorMsg)
+        return redirect('ng_wifi_scan_home')
+    
+    # Get results (save to django db from above function)
+    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(wifi_scan=wifi_scan)
+    stationResults=Wifi_Scan_Station_Result.objects.all().filter(wifi_scan=wifi_scan)
+    
+    return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"beaconResults":beaconResults, "stationResults": stationResults})
 
 # UTILS
 # ADMIN
@@ -87,11 +127,14 @@ def parse_airmon_ng_console_output(consoleOutput: str, skip=3, up_to_minus=2, se
     return result
 
 # SCAN
-def ng_wifi_scan(interface_name: str, scan_time: int)->(bool, str, int):
+def ng_wifi_scan(scanObj: Wifi_Scan)->(bool, str, Wifi_Scan):
     """
     Uses airmon/airodump to scan wifi.
-    Returns success (bool), error message (str), scan id (int)
+    Returns error (bool), error message (str), scan
     """
+    # Unpack details
+    interface_name=scanObj.interface
+    scan_time=scanObj.duration_s
     
     # time stamp & filename
     ts=datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
@@ -99,19 +142,19 @@ def ng_wifi_scan(interface_name: str, scan_time: int)->(bool, str, int):
     filePathPrefix=os.path.join(settings.AIRCRACK_SCAN_RESULTS_PATH, filenamePrefix)
     filePathPattern=f'{filePathPrefix}*'
     
-    # Create Django scan object
-    
     # First start interface monitoring, no effect if alreay in monitor mode
     monitor_on = subprocess.run(["sudo", "airmon-ng", "start", interface_name])
     if monitor_on.returncode != 0:
-        return False, f"Could not set {interface_name} to monitor", None
+        return True, f"Could not set {interface_name} to monitor"
     monitor_interface=interface_name+"mon" if interface_name[-3:] != "mon" else interface_name
     
     # Run scan, need to use popen as command wont exit
-    scan = subprocess.Popen(["sudo", "airodump-ng", monitor_interface, "-w", filePathPrefix, "--output-format", "csv"], close_fds=True)
+    scanProc=subprocess.Popen(["sudo", "airodump-ng", monitor_interface, "-w", filePathPrefix, "--output-format", "csv"], close_fds=True)
     time.sleep(scan_time)
-    scan.terminate()
-    scan.kill()
+    scanProc.terminate()
+    scanProc.kill()
+    
+    # Reset monitor
     monitor_off = subprocess.run(["sudo", "airmon-ng", "stop", monitor_interface])
     
     # Read & Save results
@@ -121,14 +164,15 @@ def ng_wifi_scan(interface_name: str, scan_time: int)->(bool, str, int):
     with open(resultFilePath, "r") as resFile:
         results=resFile.read()
         
-    # TODO - Save scan results!
+    # Save scan results
+    saveAiroDumpResults(results, scanObj)
     
     # Clean tmp file
     os.remove(resultFilePath)
     
-    return True, results, None
+    return False, None
 
-def saveAiroDumpResults(results):
+def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
     """
     To save memory/time not using pandas instead reading and parsing file string directly
     Router Schema
@@ -138,18 +182,61 @@ def saveAiroDumpResults(results):
         Station MAC, First time seen, Last time seen, Power, # packets, BSSID, Probed ESSIDs
     """
     # Get Routers vs Stations
-    routerEntries, stationEntries = results.split('Station MAC, First time seen, Last time seen, Power, # packets, BSSID, Probed ESSIDs')
-    
-    for stationEntry in stationEntries.split('\n'):
-        if len(stationEntry) != 0:
-            elements=[elem.lstrip() for elem in stationEntry.split(",")]
-            if len(elements)>=7:
-                # Save entry
-                pass
+    STATION_HEADERS_STRING='Station MAC, First time seen, Last time seen, Power, # packets, BSSID, Probed ESSIDs'
+    if STATION_HEADERS_STRING in results:
+        beaconEntries, stationEntries=results.split(STATION_HEADERS_STRING)
+    else:
+        beaconEntries=results
+        stationEntries=None
+        
+    # Save Beacons (read from index 2 to remove blank line and header)
+    for beaconEntry in beaconEntries.split('\n')[2:]:
+        if len(beaconEntry) != 0:
+            elements=[elem.lstrip() for elem in beaconEntry.split(",")]
+            if len(elements)>=15:
+                beaconResult=Wifi_Scan_Beacon_Result(
+                    wifi_scan=scanObj,
+                    bssid=elements[0],
+                    first_time_seen=elements[1],
+                    last_time_seen=elements[2],
+                    channel=int(elements[3]),
+                    speed=int(elements[4]),
+                    privacy=elements[5],
+                    cipher=elements[6],
+                    authentication=elements[7],
+                    power=int(elements[8]),
+                    num_beacons=int(elements[9]),
+                    num_iv=int(elements[10]),
+                    lan_ip=elements[11],
+                    id_len=int(elements[12]),
+                    essid=elements[13],
+                    key=elements[14],
+                )
+                beaconResult.save()
             else:
                 # TODO - LOG!!
                 pass
-
+        
+    # Save Stations
+    if stationEntries is not None:
+        for stationEntry in stationEntries.split('\n'):
+            if len(stationEntry) != 0:
+                elements=[elem.lstrip() for elem in stationEntry.split(",")]
+                if len(elements)>=7:
+                    stationResult=Wifi_Scan_Station_Result(
+                        wifi_scan=scanObj,
+                        station_mac=elements[0],
+                        first_time_seen=elements[1],
+                        last_time_seen=elements[2],
+                        power=int(elements[3]),
+                        num_packets=int(elements[4]),
+                        bssid=elements[5],
+                        probed_essids=elements[6:]
+                    )
+                    stationResult.save()
+                else:
+                    # TODO - LOG!!
+                    pass
     
     
 

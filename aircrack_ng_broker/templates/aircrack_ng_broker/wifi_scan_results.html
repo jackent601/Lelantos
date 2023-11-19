@@ -3,7 +3,33 @@
     {% load static %}
 
     {% if user.is_authenticated %}
-       {{ scanResults }}
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                <th scope="col">bssid</th>
+                <th scope="col">channel</th>
+                <th scope="col">last seen</th>
+                <th scope="col">essid</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for beacon in beaconResults %}
+                    <tr>
+                        <td>{{ beacon.bssid }}</td>
+                        <td>{{ beacon.channel }} </td>
+                        <td>{{ beacon.last_time_seen }}</td>
+                        <td>{{ beacon.essid }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        Station Results 
+        <br>
+        <br>
+        {% for res in stationResults %}
+            {{ res }}
+        {% endfor %}
     {% endif %}
 {% endblock %}
 
