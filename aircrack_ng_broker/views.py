@@ -12,6 +12,8 @@ DEFAULT_SCAN_TIME_s=30
 MINIMUM_SCAN_TIME_s=15
 
 # VIEWS
+
+# HOME
 def ng_wifi_scan_home(request):
     # Auth
     active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
@@ -24,9 +26,34 @@ def ng_wifi_scan_home(request):
     # Devices
     wifiDevicesDetails=get_wifi_devices()
     availableDevices=[d["Interface"] for d in wifiDevicesDetails]
-    return render(request, 'aircrack_ng_broker/wifi_scan.html', {"info":wifiDevicesDetails, "device_list":availableDevices})
+    
+    # Historic Scans
+    # TODO - carosel type thing?
+    historic_scans=Wifi_Scan.objects.all().filter(session__user=active_session.user).order_by('-start_time')
+    return render(request, 'aircrack_ng_broker/wifi_scan.html', {"info":wifiDevicesDetails, 
+                                                                 "device_list":availableDevices, 
+                                                                 "historic_scans":historic_scans})
 
-def ng_wifi_scan_results(request):
+# RESULTS
+def ng_wifi_show_scan_results(request):
+    # Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    # Scan
+    scan_id=request.GET.get('scan_id', None)
+    if scan_id is None:
+        message=messages.error(request, "Must select a scan to view it's results, no scan_id in request params")
+        return redirect('ng_wifi_scan_home')
+    
+    return util_show_scan_results(request, scan_id)
+
+# RUN SCAN
+def ng_wifi_run_scan(request):
     # Auth
     active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
@@ -40,8 +67,9 @@ def ng_wifi_scan_results(request):
         # Message to warn not recent
         message=messages.error(request, "Scan details not provided, showing most recent results for user.")
         # render recent stuff
+        most_recent_id=Wifi_Scan.objects.all().order_by('-start_time').first().id
         # Return
-        return render(request, 'aircrack_ng_broker/wifi_scan_results.html')
+        return util_show_scan_results(request, most_recent_id)
     
     # Scan
     if 'wifiInterfaceSelect' not in request.POST:
@@ -68,11 +96,7 @@ def ng_wifi_scan_results(request):
         message=messages.error(request, errorMsg)
         return redirect('ng_wifi_scan_home')
     
-    # Get results (save to django db from above function)
-    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(wifi_scan=wifi_scan)
-    stationResults=Wifi_Scan_Station_Result.objects.all().filter(wifi_scan=wifi_scan)
-    
-    return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"beaconResults":beaconResults, "stationResults": stationResults})
+    return util_show_scan_results(request, wifi_scan.id)
 
 # UTILS
 # ADMIN
@@ -238,7 +262,15 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                     # TODO - LOG!!
                     pass
     
+# RESULTS
+def util_show_scan_results(request, scan_id):
     
+    # Get results from django db
+    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(wifi_scan__id=scan_id)
+    stationResults=Wifi_Scan_Station_Result.objects.all().filter(wifi_scan__id=scan_id)
+    
+    return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"beaconResults":beaconResults, "stationResults": stationResults})
+
 
 
 

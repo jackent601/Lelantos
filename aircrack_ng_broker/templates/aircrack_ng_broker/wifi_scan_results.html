@@ -4,7 +4,12 @@
 
     {% if user.is_authenticated %}
 
-        <table class="table table-striped">
+    <div>
+        <a href="{% url 'ng_wifi_scan_home' %}" class="btn btn-primary">
+            Back
+        </a>
+        <br>
+        <table class="table table-striped table-dark">
             <thead>
                 <tr>
                 <th scope="col">bssid</th>
@@ -25,11 +30,27 @@
             </tbody>
         </table>
         Station Results 
-        <br>
-        <br>
-        {% for res in stationResults %}
-            {{ res }}
-        {% endfor %}
+        <table class="table table-striped table-dark">
+            <thead>
+                <tr>
+                <th scope="col">MAC</th>
+                <th scope="col">last seen</th>
+                <th scope="col">bssid</th>
+                <th scope="col">probed essids</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for station in stationResults %}
+                    <tr>
+                        <td>{{ station.station_mac }}</td>
+                        <td>{{ station.last_time_seen }} </td>
+                        <td>{{ station.bssid }}</td>
+                        <td>{{ station.probed_essids }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 {% endblock %}
 

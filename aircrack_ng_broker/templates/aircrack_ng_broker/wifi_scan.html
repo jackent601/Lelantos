@@ -11,7 +11,7 @@
                 <a href="#" class="btn btn-primary">Refresh API Token</a> -->
                 <em>Available Devices:</em>
                 <div>
-                    <form method="POST" action="{% url 'ng_wifi_scan_results' %}">
+                    <form method="POST" action="{% url 'ng_wifi_run_scan' %}">
                     {% csrf_token %}
                         <table class="table table-striped">
                             <thead>
@@ -56,6 +56,28 @@
                                 <a href="{% url 'ng_wifi_scan_home' %}" class="btn btn-primary">
                                     Refresh Devices
                                 </a>
+                            </div>
+                            <div>
+                                Historic Scans
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Duration(s)</th>
+                                        <th scope="col">Interface</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for historic_scan in historic_scans %}
+                                            <tr>
+                                                
+                                                <td><a href="{% url 'ng_wifi_show_scan_results' %}?scan_id={{ historic_scan.id }}">{{ historic_scan.start_time }}</a></td>
+                                                <td>{{ historic_scan.duration_s }} </td>
+                                                <td>{{ historic_scan.interface }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
                             <br>
                             <br>
