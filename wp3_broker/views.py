@@ -50,9 +50,9 @@ def refresh_wp3_api_auth_token_for_session(request):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 def wp3_ap_config(request):
     # Handle Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wp3 scan")
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wp3 info")
     if _error:
-        return redirect
+        return _redirect
     if active_session is None:
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
@@ -68,3 +68,20 @@ def wp3_ap_config(request):
         return redirect('wp3_server_health')
 
     return render(request, 'wp3_broker/ap.html', {"ap_config":resp})
+
+def start_wp3_rest_server(request):
+    # Handle Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to start wp3")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    msg, success = wp3_api_utils.start_wp3_rest(active_session)
+    if success:
+        message=messages.success(request, msg)
+        return redirect('wp3_server_health')
+    else:
+        message=messages.error(request, msg)
+        return redirect('wp3_server_health') 

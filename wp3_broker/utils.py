@@ -10,8 +10,10 @@ import socket
 import base64 
 import requests
 import json
+import subprocess
+
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-# SERVER STATUS & CONFIG
+# SERVER
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 def wp3_api_running()->bool:
     """
@@ -42,6 +44,34 @@ def get_wp3_api_config_map_from_settings(check_server_running=False)->map:
         server_running=wp3_api_running()
         config_map["server_running"]=server_running
     return settings.WP3_API_DEFAULT_CONFIG_MAP
+
+def start_wp3_rest(session: Session, api_cfg=None)->(str, bool):
+    if wp3_api_running():
+        return "Server already running", True
+    
+    if api_cfg is None:
+        api_cfg=get_wp3_api_config_map_from_settings(check_server_running=False)
+    
+    # Start Server in background
+    rest_server=subprocess.Popen(["sudo",
+                                  "wp3",
+                                  "--rest", 
+                                  "--password",
+                                  api_cfg["wp3_api_password"],
+                                  "--username",
+                                  api_cfg["wp3_api_username"]],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+    
+    return "Started wp3 server", True
+    
+    # Create wp3 session object
+    # Wp3_Rest_Session(session=session,
+    #                  start_time=timezone.now(),
+    #                  active=True,
+    #                  pid=rest_server.pid)
+
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # API AUTH TOKEN

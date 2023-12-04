@@ -3,6 +3,7 @@ from django.utils import timezone
 import datetime
 import random
 from django.contrib.auth.models import User
+import subprocess
 
 MAX_SESSION_ID=9223372036854775807
 TIME_FORMAT="%m/%d/%Y-%H:%M:%S"
@@ -24,8 +25,20 @@ class Session(models.Model):
     def __str__(self):
         time_formated=self.start_time.strftime(TIME_FORMAT)
         return f"Session ({self.session_id}) started at {time_formated}, from src_ip: {self.src_ip}"
+
+# Maybe worth adding in sometime?  
+# class Wp3_Rest_Session(models.Model):
+#     session = models.OneToOneField(Session, on_delete=models.CASCADE)
+#     start_time = models.DateTimeField()
+#     end_time = models.DateTimeField(null=True)
+#     active = models.BooleanField()
+#     pid = models.PositiveIntegerField()
+    
+#     def end_rest_session(self):
+#         return subprocess.Popen(["sudo", "kill", "-9", str(self.pid)]).returncode == 0
     
 class Wp3_Authentication_Token(models.Model):
+    # TODO - move session to Wp3RestSession
     session = models.OneToOneField(Session, on_delete=models.CASCADE)
     token = models.CharField(max_length=2000)
     issued_at = models.DateTimeField()
