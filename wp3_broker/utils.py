@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 
-from wp3_basic.models import Session, Wp3_Authentication_Token
+from wp3_basic.models import Session, Wp3_Authentication_Token, Wp3_Rest_Session
 
 import socket
 import base64 
@@ -64,13 +64,14 @@ def start_wp3_rest(session: Session, api_cfg=None)->(str, bool):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
     
-    return "Started wp3 server", True
-    
     # Create wp3 session object
-    # Wp3_Rest_Session(session=session,
-    #                  start_time=timezone.now(),
-    #                  active=True,
-    #                  pid=rest_server.pid)
+    wpS = Wp3_Rest_Session(session=session,
+                           start_time=timezone.now(),
+                           active=True,
+                           pid=rest_server.pid)
+    wpS.save()
+    
+    return "Started wp3 server", True
 
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 

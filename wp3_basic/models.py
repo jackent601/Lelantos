@@ -27,15 +27,19 @@ class Session(models.Model):
         return f"Session ({self.session_id}) started at {time_formated}, from src_ip: {self.src_ip}"
 
 # Maybe worth adding in sometime?  
-# class Wp3_Rest_Session(models.Model):
-#     session = models.OneToOneField(Session, on_delete=models.CASCADE)
-#     start_time = models.DateTimeField()
-#     end_time = models.DateTimeField(null=True)
-#     active = models.BooleanField()
-#     pid = models.PositiveIntegerField()
+class Wp3_Rest_Session(models.Model):
+    session = models.OneToOneField(Session, on_delete=models.CASCADE)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True)
+    active = models.BooleanField()
+    pid = models.PositiveIntegerField()
     
-#     def end_rest_session(self):
-#         return subprocess.Popen(["sudo", "kill", "-9", str(self.pid)]).returncode == 0
+    def end_rest_session(self):
+        ended = subprocess.run(["sudo", "kill", "-9", str(self.pid)]).returncode == 0
+        self.end_time=timezone.now()
+        self.active=False
+        self.save()
+        return ended
     
 class Wp3_Authentication_Token(models.Model):
     # TODO - move session to Wp3RestSession

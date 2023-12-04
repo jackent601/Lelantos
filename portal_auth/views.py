@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.contrib.auth import authenticate, login, logout 
 from django.contrib import messages
-from wp3_basic.models import Session, get_new_valid_session_id
+from wp3_basic.models import Session, get_new_valid_session_id, Wp3_Rest_Session
 from django.utils import timezone
 from django.contrib.auth.models import User
 
@@ -30,9 +30,9 @@ def login_user(request: HttpRequest):
     
     # Check Server
     if wp3_api_running():
-        message=messages.success(request, "wp3 server is running") 
+        message=messages.warning(request, "wp3 server already running") 
     else:
-        message=messages.error(request, "wp3 server is not running, start server or check server config")
+        message=messages.success(request, "wp3 server ready to start")
     return redirect('home')
 
 
@@ -46,6 +46,16 @@ def logout_user(request: HttpRequest):
             message=messages.error(request, "Multiple sessions were detected, all were closed")
         # Gracefully shutdown and move to inactive (not deleted to maintain audit log)
         for session in qs:
+            # Shutdown any wp3 servers associated with session
+            restSessions=Wp3_Rest_Session.objects.all().filter(session=session, active=True)
+            for rs in restSessions:
+                ended=rs.end_rest_session()
+                if ended:
+                    message=messages.success(request, f"Stopped wp3 server (pid: {rs.pid})")
+                else:
+                    message=messages.error(request, f"Failed to stop wp3 server (pid: {rs.pid}), shutdown manually")
+            
+            # End session
             print(session)
             session.active=False
             session.end_time=timezone.now()

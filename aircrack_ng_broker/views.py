@@ -11,7 +11,9 @@ import glob, os, datetime, time, subprocess
 DEFAULT_SCAN_TIME_s=30
 MINIMUM_SCAN_TIME_s=15
 
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # VIEWS
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 # HOME
 def ng_wifi_scan_home(request):
@@ -98,8 +100,21 @@ def ng_wifi_run_scan(request):
     
     return util_show_scan_results(request, wifi_scan.id)
 
-# UTILS
-# ADMIN
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+# UTILS - view utils
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+def util_show_scan_results(request, scan_id):
+    
+    # Get results from django db
+    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(wifi_scan__id=scan_id)
+    stationResults=Wifi_Scan_Station_Result.objects.all().filter(wifi_scan__id=scan_id)
+    
+    return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"beaconResults":beaconResults, "stationResults": stationResults})
+
+
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+# UTILS - Devices
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 def get_wifi_devices():
     """
     uses airmon-ng to find available devices for scan
@@ -150,7 +165,9 @@ def parse_airmon_ng_console_output(consoleOutput: str, skip=3, up_to_minus=2, se
             raise "unexpected format in airmon-ng console output, check validation schema"
     return result
 
-# SCAN
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+# UTILS - Scanning
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 def ng_wifi_scan(scanObj: Wifi_Scan)->(bool, str, Wifi_Scan):
     """
     Uses airmon/airodump to scan wifi.
@@ -261,16 +278,5 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                 else:
                     # TODO - LOG!!
                     pass
-    
-# RESULTS
-def util_show_scan_results(request, scan_id):
-    
-    # Get results from django db
-    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(wifi_scan__id=scan_id)
-    stationResults=Wifi_Scan_Station_Result.objects.all().filter(wifi_scan__id=scan_id)
-    
-    return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"beaconResults":beaconResults, "stationResults": stationResults})
-
-
 
 
