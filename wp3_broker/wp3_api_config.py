@@ -23,3 +23,6 @@ WP3_API_DEFAULT_CONFIG_MAP={
     "wp3_api_token_extension": WP3_API_TOKEN_EXTENSION,
     "wp3_api_ap_config_extension": WP3_API_AP_CONFIG_EXTENSION,
 }
+
+# Aux
+WP3_SERVER_START_WAIT_TIME=3

@@ -5,12 +5,14 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 
 from wp3_basic.models import Session, Wp3_Authentication_Token, Wp3_Rest_Session
+from wp3_broker.wp3_api_config import WP3_SERVER_START_WAIT_TIME
 
 import socket
 import base64 
 import requests
 import json
 import subprocess
+import time
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # SERVER
@@ -66,12 +68,20 @@ def start_wp3_rest(session: Session, api_cfg=None)->(str, bool):
     
     # Create wp3 session object
     wpS = Wp3_Rest_Session(session=session,
-                           start_time=timezone.now(),
-                           active=True,
-                           pid=rest_server.pid)
+                    start_time=timezone.now(),
+                    active=True,
+                    pid=rest_server.pid)
     wpS.save()
     
-    return "Started wp3 server", True
+    # Wait and check running
+    time.sleep(WP3_SERVER_START_WAIT_TIME)
+    if wp3_api_running():
+        return "Started wp3 server", True
+    else:
+        err_msg = str(rest_server.stderr)
+        out_msg = str(rest_server.stdout)
+        return_err_msg = f'could not start server. stderr: {err_msg}, stdout: {out_msg}'
+        return return_err_msg, False
 
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
