@@ -5,3 +5,17 @@
 - [ ] tidy where temp scan files stored and naming
 
 - [ ] progress bar for tasks (particularly scanning tasks), actually quite complicated
+
+
+
+
+
+
+
+
+
+
+
+
+
+- [ ] Start writing!
