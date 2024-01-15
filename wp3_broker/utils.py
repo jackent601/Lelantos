@@ -48,8 +48,15 @@ def get_wp3_api_config_map_from_settings(check_server_running=False)->map:
     return settings.WP3_API_DEFAULT_CONFIG_MAP
 
 def start_wp3_rest(session: Session, api_cfg=None)->(str, bool):
+    # Check if already running
     if wp3_api_running():
         return "Server already running", True
+    
+    # Check if already an active session (which may have failed)
+    failed_wp3_session = Wp3_Rest_Session.objects.all().filter(session=session, active=True)
+    for failed_wp3 in failed_wp3_session:
+        # TODO - log result
+        failed_wp3.end_rest_session()
     
     if api_cfg is None:
         api_cfg=get_wp3_api_config_map_from_settings(check_server_running=False)
@@ -68,9 +75,9 @@ def start_wp3_rest(session: Session, api_cfg=None)->(str, bool):
     
     # Create wp3 session object
     wpS = Wp3_Rest_Session(session=session,
-                    start_time=timezone.now(),
-                    active=True,
-                    pid=rest_server.pid)
+                           start_time=timezone.now(),
+                           active=True,
+                           pid=rest_server.pid)
     wpS.save()
     
     # Wait and check running

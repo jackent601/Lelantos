@@ -28,7 +28,7 @@ class Session(models.Model):
 
 # Maybe worth adding in sometime?  
 class Wp3_Rest_Session(models.Model):
-    session = models.OneToOneField(Session, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True)
     active = models.BooleanField()

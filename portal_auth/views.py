@@ -53,7 +53,7 @@ def logout_user(request: HttpRequest):
                 if ended:
                     message=messages.success(request, f"Stopped wp3 server (pid: {rs.pid})")
                 else:
-                    message=messages.error(request, f"Failed to stop wp3 server (pid: {rs.pid}), shutdown manually")
+                    message=messages.error(request, f"Failed to stop wp3 server (pid: {rs.pid}), process may have had faulty start, or need manual shutdown")
             
             # End session
             print(session)
