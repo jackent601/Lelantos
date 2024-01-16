@@ -22,5 +22,6 @@ urlpatterns = [
     path("", include("portal_auth.urls")),
     path("", include("wp3_broker.urls")),
     path("", include("aircrack_ng_broker.urls")),
+    path("", include("wifiphisher_broker.urls")),
     path('admin/', admin.site.urls),
 ]
