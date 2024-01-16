@@ -17,7 +17,19 @@ class Credential_Result(models.Model):
     password=models.CharField(max_length=200)
     capture_time=models.CharField(max_length=200)
     
+# It's an 'instance' because mac addresses, and ip constantly change. 
+# Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
+# And begin wider assoications
+class Device_Instance(models.Model):
+    mac_addr=models.CharField(max_length=200)
+    ip=models.CharField(max_length=200)
+    type=models.CharField(max_length=200)
+    
 class Wifiphisher_Credential_Result(models.Model):
+    wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
+    credential=models.ForeignKey(Credential_Result, on_delete=models.CASCADE)
+    
+class Wifiphisher_Device_Instance(models.Model):
     wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
     credential=models.ForeignKey(Credential_Result, on_delete=models.CASCADE)
 

@@ -8,9 +8,6 @@ from portal_auth.views import get_session_from_request
 
 # import glob, os, datetime, time, subprocess
 
-DEFAULT_SCAN_TIME_s=30
-MINIMUM_SCAN_TIME_s=15
-
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # VIEWS
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
