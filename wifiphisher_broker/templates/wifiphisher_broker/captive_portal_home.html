@@ -1,0 +1,32 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+
+    {% if user.is_authenticated %}
+        <div class="card" style="width: 26rem;">
+            <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">Captive Portal</h5>
+                <p class="card-text">
+                <a href="#" class="btn btn-primary">Launch</a>
+                <div>
+                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#showApConfig" aria-expanded="false" aria-controls="showApConfig">
+                        CP Config
+                    </button>
+                </div>
+            </div>
+            <div class="collapse" id="showApConfig">
+                <div class="card card-body">
+                    {% for key, value in ap_config.items %}
+                        {{ key }}: {{ value }}
+                        <br>
+                    {% endfor %}
+                </div>
+                <div class="card-body">
+                    <a href="#" class="btn btn-primary">Edit</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
