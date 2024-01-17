@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-# from django.conf import settings
+from django.conf import settings
 # from django.utils import timezone
 
 from aircrack_ng_broker.models import *
 from portal_auth.views import get_session_from_request
 
 # import glob, os, datetime, time, subprocess
+
+
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # VIEWS
@@ -24,3 +26,15 @@ def wifiphisher_captive_portal_home(request):
     
     # Devices
     return render(request, 'wifiphisher_broker/captive_portal_home.html')
+
+
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+# UTILS - Devices
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+def get_interfaces()->[str]:
+    """
+    Lists interfaces appropriate for wifiphisher captive portal. While could be taken from aircrack_ng_broker
+    separated in order to keep all packages self-contained dependency wise.
+    """
+    # TODO - implement properaly
+    return ["wlan0", "wlan1"]

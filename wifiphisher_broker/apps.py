@@ -1,4 +1,6 @@
 from django.apps import AppConfig
+# from wifiphisher_broker.wifiphisher_config import WIFIPHISHER_LOG_DIR_PATH
+# import os
 
 
 class WifiphisherBrokerConfig(AppConfig):
