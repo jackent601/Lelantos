@@ -23,5 +23,4 @@ def wifiphisher_captive_portal_home(request):
         return redirect('home')
     
     # Devices
-    message=messages.error(request, "Captive portal not yet implemented")
-    return redirect('home')
+    return render(request, 'wifiphisher_broker/captive_portal_home.html')
