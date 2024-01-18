@@ -6,9 +6,9 @@
         <div class="card" style="width: 26rem;">
             <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
             <div class="card-body">
-                <h5>Captive Portal</h5>
-            </div>
-            <div class="card-body">
+            
+                <h4>Captive Portal</h4>
+                <h5>Status: {{ captive_portal_status }} <h5>
 
                 <!-- Captive Portal Form -->
                 <form method="POST" action="{% url 'home' %}">
