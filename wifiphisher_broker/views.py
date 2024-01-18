@@ -1,14 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.conf import settings
 # from django.utils import timezone
-
-from aircrack_ng_broker.models import *
 from portal_auth.views import get_session_from_request
 
 # import glob, os, datetime, time, subprocess
-
-
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # VIEWS
@@ -24,8 +19,15 @@ def wifiphisher_captive_portal_home(request):
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
-    # Devices
-    return render(request, 'wifiphisher_broker/captive_portal_home.html')
+    # Prepare form to config captive portal
+    wphisher_config={}
+    interfaces = get_interfaces()
+    if len(interfaces) == 0:
+        message=messages.error(request, "No available interfaces for captive portal session, check platform")
+        return redirect('home')   
+    wphisher_config["interfaces"]=interfaces   
+      
+    return render(request, 'wifiphisher_broker/captive_portal_home.html', wphisher_config)
 
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 

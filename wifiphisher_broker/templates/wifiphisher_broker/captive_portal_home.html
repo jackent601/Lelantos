@@ -6,25 +6,69 @@
         <div class="card" style="width: 26rem;">
             <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
             <div class="card-body">
-                <h5 class="card-title">Captive Portal</h5>
-                <p class="card-text">
-                <a href="#" class="btn btn-primary">Launch</a>
-                <div>
-                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#showApConfig" aria-expanded="false" aria-controls="showApConfig">
-                        CP Config
-                    </button>
-                </div>
+                <h5>Captive Portal</h5>
             </div>
-            <div class="collapse" id="showApConfig">
-                <div class="card card-body">
-                    {% for key, value in ap_config.items %}
-                        {{ key }}: {{ value }}
-                        <br>
-                    {% endfor %}
-                </div>
-                <div class="card-body">
-                    <a href="#" class="btn btn-primary">Edit</a>
-                </div>
+            <div class="card-body">
+
+                <!-- Captive Portal Form -->
+                <form method="POST" action="{% url 'home' %}">
+                {% csrf_token %}
+
+                    <!-- Interface -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="inputGroupSelect01">Interface</label>
+                        </div>
+                        <select class="custom-select" id="interface">
+                            {% for interface in interfaces %}
+                                <option value="{{ interface }}">{{ interface }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Scenario -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="inputGroupSelect01">Scenario</label>
+                        </div>
+                        <select class="custom-select" id="scenario">
+                            {% for scenario in scenarios %}
+                                <option value="{{ scenario }}">{{ scenario }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Launch! -->
+                    <div>
+                        <button class="btn btn-primary" type="submit">
+                            Launch!
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Historic Captures -->
+            <div class="card-body">
+                <h5>Historic Captures</h5>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Duration(s)</th>
+                        <th scope="col">Interface</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for historic_scan in historic_scans %}
+                            <tr>
+                                
+                                <td><a href="{% url 'ng_wifi_show_scan_results' %}?scan_id={{ historic_scan.id }}">{{ historic_scan.start_time }}</a></td>
+                                <td>{{ historic_scan.duration_s }} </td>
+                                <td>{{ historic_scan.interface }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     {% endif %}

@@ -51,13 +51,7 @@
                                 <em>Scan Time:</em>
                                 <input type="range" min="1" max="120" value="10" class="form-slider" id="myRange" name="scanTime">
                             </div>
-                            <br>
-                            <div>
-                                <a href="{% url 'ng_wifi_scan_home' %}" class="btn btn-primary">
-                                    Refresh Devices
-                                </a>
-                            </div>
-                            <div>
+                            <div class="card-body">
                                 Historic Scans
                                 <table class="table table-striped">
                                     <thead>
@@ -83,13 +77,6 @@
                             <br>
                     </div>
                 <form>
-            </div>
-            <div class="collapse" id="collapseExample">
-                <div class="card card-body">
-                        Token: 
-                        <br><br>
-                        Issued at: 
-                </div>
             </div>
         </div>
     {% endif %}
