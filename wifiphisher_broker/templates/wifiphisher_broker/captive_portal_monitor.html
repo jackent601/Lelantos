@@ -3,7 +3,8 @@
     {% load static %}
 
     {% if user.is_authenticated %}
-        <div class="card" style="width: 26rem;">
+        <meta http-equiv="refresh" content="{{ update_rate }}" />
+        <div class="card" style="width: 38rem;">
             <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
             <div class="card-body">
             
@@ -45,34 +46,39 @@
                         </div>
                     </form>
                 </fieldset>
-                <!-- Launch! -->
-                <div>
-                <a href="{% url 'captive_portal_stop' %}">
-                    <button class="btn btn-primary" type="submit">
-                        Stop
-                    </button>
-                </a>
+
+                <div class="card-body">
+                    <a href="{% url 'captive_portal_monitor' %}">
+                        <button class="btn btn-primary" type="submit">
+                            Update Victims
+                        </button>
+                    </a>
+                    <a href="{% url 'captive_portal_stop' %}">
+                        <button class="btn btn-primary" type="submit">
+                            Stop
+                        </button>
+                    </a>
                 </div>
             </div>
 
             <!-- Historic Captures -->
             <div class="card-body">
-                <h5>Historic Captures</h5>
+                <h5>Current Victims</h5>
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                        <th scope="col">Date</th>
-                        <th scope="col">Duration(s)</th>
-                        <th scope="col">Interface</th>
+                        <th scope="col">MAC</th>
+                        <th scope="col">IP</th>
+                        <th scope="col">Type</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for historic_scan in historic_scans %}
+                        {% for vic in victims %}
                             <tr>
                                 
-                                <td><a href="{% url 'ng_wifi_show_scan_results' %}?scan_id={{ historic_scan.id }}">{{ historic_scan.start_time }}</a></td>
-                                <td>{{ historic_scan.duration_s }} </td>
-                                <td>{{ historic_scan.interface }}</td>
+                                <td>{{ vic.mac_addr }}</td>
+                                <td>{{ vic.ip }} </td>
+                                <td>{{ vic.type }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

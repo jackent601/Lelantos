@@ -3,7 +3,7 @@
     {% load static %}
 
     {% if user.is_authenticated %}
-        <div class="card" style="width: 26rem;">
+        <div class="card" style="width: 38rem;">
             <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
             <div class="card-body">
             
@@ -61,18 +61,18 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                        <th scope="col">Date</th>
-                        <th scope="col">Duration(s)</th>
-                        <th scope="col">Interface</th>
+                        <th scope="col">Start</th>
+                        <th scope="col">Finish</th>
+                        <th scope="col">Scenario</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for historic_scan in historic_scans %}
+                        {% for hc in historic_captures %}
                             <tr>
                                 
-                                <td><a href="{% url 'ng_wifi_show_scan_results' %}?scan_id={{ historic_scan.id }}">{{ historic_scan.start_time }}</a></td>
-                                <td>{{ historic_scan.duration_s }} </td>
-                                <td>{{ historic_scan.interface }}</td>
+                                <td><a href="{% url 'home' %}?scan_id={{ hc.id }}">{{ hc.start_time }}</a></td>
+                                <td>{{ hc.end_time }} </td>
+                                <td>{{ hc.scenario }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
