@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 
-from wp3_basic.models import Session, Wp3_Authentication_Token, Wp3_Rest_Session
+from wp3_basic.models import Session, Wp3_Authentication_Token, Module_Session
 from wp3_broker.wp3_api_config import WP3_SERVER_START_WAIT_TIME
 
 import socket
@@ -53,10 +53,10 @@ def start_wp3_rest(session: Session, api_cfg=None)->(str, bool):
         return "Server already running", True
     
     # Check if already an active session (which may have failed)
-    failed_wp3_session = Wp3_Rest_Session.objects.all().filter(session=session, active=True)
+    failed_wp3_session = Module_Session.objects.all().filter(session=session, active=True)
     for failed_wp3 in failed_wp3_session:
         # TODO - log result
-        failed_wp3.end_rest_session()
+        failed_wp3.end_module_session()
     
     if api_cfg is None:
         api_cfg=get_wp3_api_config_map_from_settings(check_server_running=False)
@@ -74,10 +74,10 @@ def start_wp3_rest(session: Session, api_cfg=None)->(str, bool):
                                  stderr=subprocess.PIPE)
     
     # Create wp3 session object
-    wpS = Wp3_Rest_Session(session=session,
-                           start_time=timezone.now(),
-                           active=True,
-                           pid=rest_server.pid)
+    wpS = Module_Session(session=session,
+                         start_time=timezone.now(),
+                         active=True,
+                         pid=rest_server.pid)
     wpS.save()
     
     # Wait and check running

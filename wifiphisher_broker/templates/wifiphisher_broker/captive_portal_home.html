@@ -8,18 +8,18 @@
             <div class="card-body">
             
                 <h4>Captive Portal</h4>
-                <h5>Status: {{ captive_portal_status }} <h5>
+                <h5>Status: Not Running<h5>
 
                 <!-- Captive Portal Form -->
-                <form method="POST" action="{% url 'home' %}">
+                <form method="POST" action="{% url 'captive_portal_launch' %}">
                 {% csrf_token %}
 
                     <!-- Interface -->
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="inputGroupSelect01">Interface</label>
+                            <label class="input-group-text" for="interface">Interface</label>
                         </div>
-                        <select class="custom-select" id="interface">
+                        <select class="custom-select" id="interface" name="interface">
                             {% for interface in interfaces %}
                                 <option value="{{ interface }}">{{ interface }}</option>
                             {% endfor %}
@@ -29,13 +29,21 @@
                     <!-- Scenario -->
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="inputGroupSelect01">Scenario</label>
+                            <label class="input-group-text" for="scenario">Scenario</label>
                         </div>
-                        <select class="custom-select" id="scenario">
+                        <select class="custom-select" id="scenario" name="scenario">
                             {% for scenario in scenarios %}
                                 <option value="{{ scenario }}">{{ scenario }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+
+                    <!-- ESSID -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon3">&#160 ESSID &#160</span>
+                        </div>
+                        <input type="text" class="form-control" id="essid" name="essid" aria-describedby="basic-addon3" value="test">
                     </div>
 
                     <!-- Launch! -->

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.contrib.auth import authenticate, login, logout 
 from django.contrib import messages
-from wp3_basic.models import Session, get_new_valid_session_id, Wp3_Rest_Session
+from wp3_basic.models import Session, get_new_valid_session_id, Module_Session
 from django.utils import timezone
 from django.contrib.auth.models import User
 
@@ -46,10 +46,10 @@ def logout_user(request: HttpRequest):
             message=messages.error(request, "Multiple sessions were detected, all were closed")
         # Gracefully shutdown and move to inactive (not deleted to maintain audit log)
         for session in qs:
-            # Shutdown any wp3 servers associated with session
-            restSessions=Wp3_Rest_Session.objects.all().filter(session=session, active=True)
+            # Shutdown all possile module processes running
+            restSessions=Module_Session.objects.all().filter(session=session, active=True)
             for rs in restSessions:
-                ended=rs.end_rest_session()
+                ended=rs.end_module_session()
                 if ended:
                     message=messages.success(request, f"Stopped wp3 server (pid: {rs.pid})")
                 else:

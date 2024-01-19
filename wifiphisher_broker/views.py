@@ -1,11 +1,17 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-# from django.utils import timezone
+from django.utils import timezone
 from portal_auth.views import get_session_from_request
 
-from wifiphisher_broker.wifiphisher_config import PHISHING_SCENARIOS
+# Models
+from wp3_basic.models import Session
+from wifiphisher_broker.models import Wifiphisher_Captive_Portal_Session
 
-# import glob, os, datetime, time, subprocess
+from wifiphisher_broker.wifiphisher_config import PHISHING_SCENARIOS, WIFIPHISHER_LOG_DIR
+import utils.utils as utils
+
+import glob, os, datetime, time, subprocess
+
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # VIEWS
@@ -14,47 +20,167 @@ from wifiphisher_broker.wifiphisher_config import PHISHING_SCENARIOS
 # HOME
 def wifiphisher_captive_portal_home(request):
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to run captive portals")
     if _error:
         return _redirect
     if active_session is None:
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
-    # Check current status
-    # status, wphisher_session = get_current_wphisher_session()
-    # wphisher_config["captive_portal_status"]=status 
+    wphisher_context={}
     
-    # Prepare Config
-    wphisher_config={}
-    # Interfaces
-    interfaces = get_interfaces()
-    if len(interfaces) == 0:
-        message=messages.error(request, "No available interfaces for captive portal session, check platform")
-        return redirect('home')   
-    wphisher_config["interfaces"]=interfaces  
+    # Check if portal already running
+    status, wphisher_session = get_current_wphisher_sessions(active_session)
+    if status:
+        message=messages.success(request, "Live captive portal session found")
+        return wifiphisher_captive_portal_monitor(request)
+    else:
+        # Render 'Home' template        
+        wphisher_context["captive_portal_status"]=status 
     
-    # Scenarios
-    scenarios = get_scenarios()
-    if len(scenarios) == 0:
-        message=messages.error(request, "No available scenarios for captive portal session, check platform")
-        return redirect('home')   
-    wphisher_config["scenarios"]=scenarios  
-      
-    return render(request, 'wifiphisher_broker/captive_portal_home.html', wphisher_config)
+        # Interfaces
+        interfaces = utils.get_wifi_interfaces()
+        if len(interfaces) == 0:
+            message=messages.error(request, "No available interfaces for captive portal session, check platform")
+            return redirect('home')   
+        wphisher_context["interfaces"]=interfaces  
+        
+        # Scenarios
+        scenarios = get_scenarios()
+        if len(scenarios) == 0:
+            message=messages.error(request, "No available scenarios for captive portal session, check platform")
+            return redirect('home')   
+        wphisher_context["scenarios"]=scenarios          
+        
+        # return render(request, 'wifiphisher_broker/captive_portal_home.html', wphisher_context)
+        return render(request, 'wifiphisher_broker/captive_portal_home.html', wphisher_context)
 
+# LAUNCH
+def wifiphisher_captive_portal_launch(request):
+    # Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to run captive portals")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    # Not a post, scan not submitted, show most recent results
+    if request.method != "POST":
+        # Message to warn not recent
+        message=messages.error(request, "Captive Portal details not provided, please submit launch form")
+        return wifiphisher_captive_portal_home(request)
+    
+    # Check no sessions already running
+    status, wphisher_session = get_current_wphisher_sessions(active_session)
+    if status:
+        message=messages.error(request, "Captive Portal session(s) already detected! Can not launch another, please end current session first.")
+        return wifiphisher_captive_portal_monitor(request)
+    
+    # Unpack post req
+    print(request.POST)
+    interface=str(request.POST['interface'])
+    scenario=str(request.POST['scenario'])
+    valid_scenarios=get_scenarios()
+    if scenario not in valid_scenarios:
+        message=messages.error(request, f"Scenario: {scenario} not valid, please select valid scenario.")
+        return wifiphisher_captive_portal_home(request)
+    essid=str(request.POST['essid'])    
+    
+    # Launch process!
+    log_path, cred_path = get_new_log_paths(interface, scenario, essid) 
+    captive_portal=subprocess.Popen(["sudo",
+                                     "wifiphisher",
+                                     "-aI", 
+                                     interface,
+                                     "-kN",
+                                     "-nE",
+                                     "-dK",
+                                     "-e",
+                                     essid,
+                                     "-p",
+                                     scenario,
+                                     "--logging",
+                                     "--logpath",
+                                     log_path,
+                                     "-cP",
+                                     cred_path],  
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+    # create module session
+    wPhSession = Wifiphisher_Captive_Portal_Session(session = active_session,
+                                                    start_time = timezone.now(),
+                                                    active=True,
+                                                    pid=captive_portal.pid,
+                                                    interface=interface,
+                                                    scenario=scenario,
+                                                    essid=essid,
+                                                    log_file_path=log_path,
+                                                    cred_file_path=cred_path)
+    wPhSession.save()
+    
+    # Redirect to monitor
+    message=messages.success(request, "Captive Portal session launched!")
+    return wifiphisher_captive_portal_monitor(request)
+    
+# MONITOR
+def wifiphisher_captive_portal_monitor(request):
+    # Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to monitor captive portals")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    # Get active captive portal session
+    status, wphisher_sessions = get_current_wphisher_sessions(active_session)
+    if not status or len(wphisher_sessions) < 1:
+        message=messages.error(request, "No Captive Portal running, launch one to monitor.")
+        return wifiphisher_captive_portal_home(request)
+    
+    # Handle error case
+    if len(wphisher_sessions) > 1:
+        message=messages.error(request, "Multiple captive portal sessions detected, killing all but 1")
+        for s in wphisher_sessions[1:]:
+            killed = s.end_module_session()
+            if killed:
+                message=messages.success(request, f"Killed pid: {s.pid}")
+            else:
+                message=messages.error(request, f"Failed to kill pid: {s.pid}, system restart suggested")
+    
+    wphisher_session = wphisher_sessions[0]
+    return render(request, 'wifiphisher_broker/captive_portal_monitor.html', {"monitor": wphisher_session})
+
+def wifiphisher_captive_portal_stop(request):
+    """
+    Stop all captive portal sessions for user (there should only be 1 anyway)
+    """
+    # Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access captive portals")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    # Get active captive portal session
+    status, wphisher_sessions = get_current_wphisher_sessions(active_session)
+    if not status or len(wphisher_sessions) < 1:
+        message=messages.success(request, "No Captive Portal running")
+    else:
+        for s in wphisher_sessions:
+            killed = s.end_module_session()
+            if killed:
+                message=messages.success(request, f"Killed pid: {s.pid}")
+            else:
+                message=messages.error(request, f"Failed to kill pid: {s.pid}, system restart suggested")
+    return wifiphisher_captive_portal_home(request)
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-# UTILS - Devices
+# Utils
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def get_interfaces()->[str]:
-    """
-    Lists interfaces appropriate for wifiphisher captive portal. While could be taken from aircrack_ng_broker
-    separated in order to keep all packages self-contained dependency wise.
-    """
-    # TODO - implement properaly
-    return ["wlan0", "wlan1"]
-
 def get_scenarios()->[str]:
     """
     Lists scenarios available for wifiphisher captive portal. Declared in wifiphisher config
@@ -63,4 +189,40 @@ def get_scenarios()->[str]:
     # TODO - implement properaly
     return PHISHING_SCENARIOS.keys()
 
-# def get_current_wphisher_session():
+def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive_Portal_Session]):
+    """
+    From a global session returns any active wifiphisher session(s)
+    """
+    active_sessions = Wifiphisher_Captive_Portal_Session.objects.filter(session=session, active=True)
+    if len(active_sessions) > 0:
+        return True, [active_session for active_session in active_sessions]
+    else:
+        return False, None
+    
+def get_new_log_paths(interface, scenario, essid):
+    """
+    Uses config to determine log file names, these files are used to store info into django
+    """
+    ts=datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    filename_prefix=f'{ts}_{interface}_{scenario}_{essid}'
+    log_path=os.path.join(WIFIPHISHER_LOG_DIR, f"{filename_prefix}.log")
+    cred_path=os.path.join(WIFIPHISHER_LOG_DIR, f"{filename_prefix}_cred.log")
+    return log_path, cred_path
+    
+def handle_active_sessions(request, sessions):
+    """
+    Helper function for useful messages on home page.
+    
+    Additionally Captive portal (in v1) is not designed to have multiple sessions running, this programmatically closes
+    if multiple are found and provides debug
+    """
+    if len(sessions) > 1:
+        message=messages.error(request, "Multiple captive portal sessions detected, killing all")
+        for s in sessions[1:]:
+            killed = s.end_module_session()
+            if killed:
+                message=messages.success(request, f"Killed pid: {s.pid}")
+            else:
+                message=messages.error(request, f"Failed to kill pid: {s.pid}, suggested to restart system")
+    else:
+        message=messages.success(request, f"Captive portal session running with interface: {s.interface}, scenario: {s.scenario}, ESSID: {s.essid} detected, killing all")  

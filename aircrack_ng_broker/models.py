@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
 from wp3_basic.models import Session
 
 class Wifi_Scan(models.Model):

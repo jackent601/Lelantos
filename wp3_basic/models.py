@@ -26,15 +26,19 @@ class Session(models.Model):
         time_formated=self.start_time.strftime(TIME_FORMAT)
         return f"Session ({self.session_id}) started at {time_formated}, from src_ip: {self.src_ip}"
 
-# Maybe worth adding in sometime?  
-class Wp3_Rest_Session(models.Model):
+"""
+    Allows tracking of arbitrary linux processes for modules
+    Also allows ending process through model method
+"""
+class Module_Session(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    module_name = models.CharField(max_length=2000)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True)
     active = models.BooleanField()
     pid = models.PositiveIntegerField()
     
-    def end_rest_session(self):
+    def end_module_session(self):
         ended = subprocess.run(["sudo", "kill", "-9", str(self.pid)]).returncode == 0
         self.end_time=timezone.now()
         self.active=False
