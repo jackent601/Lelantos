@@ -1,9 +1,11 @@
+import subprocess
+import time
 from django.db import models
-from django.contrib.auth.models import User
 from wp3_basic.models import Session, Module_Session
-from wifiphisher_broker.utils import read_connected_victims_file
+from wifiphisher_broker.utils import read_dnsmasq_file, get_victims_currently_connected
 
 MODULE_NAME="wifiphisher_captive_portal"
+ARP_FLUSH_WAIT_TIME=3 # time to wait before flushing arp after session close
 
 # to be moved into 'basic'
 # TODO - review ng in the manner
@@ -23,6 +25,7 @@ class Device_Instance(models.Model):
     private_ip=models.CharField(max_length=200)
     type=models.CharField(max_length=200)
 
+# TODO - delete dnsmasq once session ended - sometimes automatic?
 class Wifiphisher_Captive_Portal_Session(Module_Session):
     module_name=MODULE_NAME
     interface = models.CharField(max_length=200)
@@ -37,7 +40,8 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         Compares victims that have connected (linux) to all recorded victims (django) for the session and updates django appropriately
         for the session
         """
-        dns_victim_list, error = read_connected_victims_file()
+        # dns_victim_list, error = read_dnsmasq_file()
+        dns_victim_list, error = get_victims_currently_connected(self.interface)
         if error:
             return
         for victim in dns_victim_list:
@@ -63,6 +67,27 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         "updates victims, returns all victims"
         self.update_victims()
         return self.get_victims()
+    
+    def flush_victim_arp(self)->bool:
+        """ Used after ending session to delete arp entries to prime any new sessions shortly after"""
+        # Need to wait for potal to fully close
+        time.sleep(ARP_FLUSH_WAIT_TIME)
+        victims = self.get_victims()
+        for vic in victims:
+            vic_ip = vic.ip
+            subprocess.run(["sudo", "arp", "-d", vic_ip])
+        return True
+    
+    
+def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive_Portal_Session]):
+    """
+    From a global session returns any active wifiphisher session(s)
+    """
+    active_sessions = Wifiphisher_Captive_Portal_Session.objects.filter(session=session, active=True)
+    if len(active_sessions) > 0:
+        return True, [active_session for active_session in active_sessions]
+    else:
+        return False, None
                 
     
 class Wifiphisher_Credential_Result(models.Model):

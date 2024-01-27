@@ -4,12 +4,14 @@ from django.utils import timezone
 from portal_auth.views import get_session_from_request
 
 # Models
-from wp3_basic.models import Session
-from wifiphisher_broker.models import Wifiphisher_Captive_Portal_Session
+# from wp3_basic.models import Session
+from wifiphisher_broker.models import Wifiphisher_Captive_Portal_Session, get_current_wphisher_sessions
+
+
 
 import wifiphisher_broker.wifiphisher_config as cnf
-import utils.utils as utils
-
+import utils.utils as gen_utils
+import wifiphisher_broker.utils as wph_utils
 import glob, os, datetime, time, subprocess
 
 
@@ -33,20 +35,21 @@ def wifiphisher_captive_portal_home(request):
     status, wphisher_session = get_current_wphisher_sessions(active_session)
     if status:
         message=messages.success(request, "Live captive portal session found")
-        return wifiphisher_captive_portal_monitor(request)
+        # return wifiphisher_captive_portal_monitor(request)
+        return redirect('captive_portal_monitor')
     
     # Launch Form      
     wphisher_context["captive_portal_status"]=status 
 
     # Interfaces
-    interfaces = utils.get_wifi_interfaces()
+    interfaces = gen_utils.get_wifi_interfaces()
     if len(interfaces) == 0:
         message=messages.error(request, "No available interfaces for captive portal session, check platform")
         return redirect('home')   
     wphisher_context["interfaces"]=interfaces  
     
     # Scenarios
-    scenarios = get_scenarios()
+    scenarios = wph_utils.get_scenarios()
     if len(scenarios) == 0:
         message=messages.error(request, "No available scenarios for captive portal session, check platform")
         return redirect('home')   
@@ -82,14 +85,14 @@ def wifiphisher_captive_portal_launch(request):
     print(request.POST)
     interface=str(request.POST['interface'])
     scenario=str(request.POST['scenario'])
-    valid_scenarios=get_scenarios()
+    valid_scenarios=wph_utils.get_scenarios()
     if scenario not in valid_scenarios:
         message=messages.error(request, f"Scenario: {scenario} not valid, please select valid scenario.")
         return redirect('captive_portal_home')
     essid=str(request.POST['essid'])    
     
     # Launch process!
-    log_path, cred_path = get_new_log_paths(interface, scenario, essid) 
+    log_path, cred_path = wph_utils.get_new_log_paths(interface, scenario, essid) 
     captive_portal=subprocess.Popen(["sudo",
                                      "wifiphisher",
                                      "-aI", 
@@ -146,6 +149,7 @@ def wifiphisher_captive_portal_monitor(request):
         message=messages.error(request, "Multiple captive portal sessions detected, killing all but 1")
         for s in wphisher_sessions[1:]:
             killed = s.end_module_session()
+            s.flush_victim_arp()
             if killed:
                 message=messages.success(request, f"Killed pid: {s.pid}")
             else:
@@ -179,6 +183,7 @@ def wifiphisher_captive_portal_stop(request):
     else:
         for s in wphisher_sessions:
             killed = s.end_module_session()
+            s.flush_victim_arp()
             if killed:
                 message=messages.success(request, f"Killed pid: {s.pid}")
             else:
@@ -188,48 +193,48 @@ def wifiphisher_captive_portal_stop(request):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # Utils TODO - move this into utils
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def get_scenarios()->[str]:
-    """
-    Lists scenarios available for wifiphisher captive portal. Declared in wifiphisher config
-    TODO - Perhaps could be acertained from the tool itself?
-    """
-    # TODO - implement properaly
-    return cnf.PHISHING_SCENARIOS.keys()
+# def get_scenarios()->[str]:
+#     """
+#     Lists scenarios available for wifiphisher captive portal. Declared in wifiphisher config
+#     TODO - Perhaps could be acertained from the tool itself?
+#     """
+#     # TODO - implement properaly
+#     return cnf.PHISHING_SCENARIOS.keys()
 
-def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive_Portal_Session]):
-    """
-    From a global session returns any active wifiphisher session(s)
-    """
-    active_sessions = Wifiphisher_Captive_Portal_Session.objects.filter(session=session, active=True)
-    if len(active_sessions) > 0:
-        return True, [active_session for active_session in active_sessions]
-    else:
-        return False, None
+# def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive_Portal_Session]):
+#     """
+#     From a global session returns any active wifiphisher session(s)
+#     """
+#     active_sessions = Wifiphisher_Captive_Portal_Session.objects.filter(session=session, active=True)
+#     if len(active_sessions) > 0:
+#         return True, [active_session for active_session in active_sessions]
+#     else:
+#         return False, None
     
-def get_new_log_paths(interface, scenario, essid):
-    """
-    Uses config to determine log file names, these files are used to store info into django
-    """
-    ts=datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-    filename_prefix=f'{ts}_{interface}_{scenario}_{essid}'
-    log_path=os.path.join(cnf.WIFIPHISHER_LOG_DIR, f"{filename_prefix}.log")
-    cred_path=os.path.join(cnf.WIFIPHISHER_LOG_DIR, f"{filename_prefix}_cred.log")
-    return log_path, cred_path
+# def get_new_log_paths(interface, scenario, essid):
+#     """
+#     Uses config to determine log file names, these files are used to store info into django
+#     """
+#     ts=datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+#     filename_prefix=f'{ts}_{interface}_{scenario}_{essid}'
+#     log_path=os.path.join(cnf.WIFIPHISHER_LOG_DIR, f"{filename_prefix}.log")
+#     cred_path=os.path.join(cnf.WIFIPHISHER_LOG_DIR, f"{filename_prefix}_cred.log")
+#     return log_path, cred_path
     
-def handle_active_sessions(request, sessions):
-    """
-    Helper function for useful messages on home page.
+# def handle_active_sessions(request, sessions):
+#     """
+#     Helper function for useful messages on home page.
     
-    Additionally Captive portal (in v1) is not designed to have multiple sessions running, this programmatically closes
-    if multiple are found and provides debug
-    """
-    if len(sessions) > 1:
-        message=messages.error(request, "Multiple captive portal sessions detected, killing all")
-        for s in sessions[1:]:
-            killed = s.end_module_session()
-            if killed:
-                message=messages.success(request, f"Killed pid: {s.pid}")
-            else:
-                message=messages.error(request, f"Failed to kill pid: {s.pid}, suggested to restart system")
-    else:
-        message=messages.success(request, f"Captive portal session running with interface: {s.interface}, scenario: {s.scenario}, ESSID: {s.essid} detected, killing all")
+#     Additionally Captive portal (in v1) is not designed to have multiple sessions running, this programmatically closes
+#     if multiple are found and provides debug
+#     """
+#     if len(sessions) > 1:
+#         message=messages.error(request, "Multiple captive portal sessions detected, killing all")
+#         for s in sessions[1:]:
+#             killed = s.end_module_session()
+#             if killed:
+#                 message=messages.success(request, f"Killed pid: {s.pid}")
+#             else:
+#                 message=messages.error(request, f"Failed to kill pid: {s.pid}, suggested to restart system")
+#     else:
+#         message=messages.success(request, f"Captive portal session running with interface: {s.interface}, scenario: {s.scenario}, ESSID: {s.essid} detected, killing all")
