@@ -21,6 +21,7 @@ class Device_Instance(models.Model):
 class Credential_Result(models.Model):
     module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
     device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
+    ip=models.CharField(max_length=200)
     type=models.CharField(max_length=200)
     username=models.CharField(max_length=200)
     password=models.CharField(max_length=200)
@@ -86,16 +87,18 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         if cred_entries is None or _err:
             return
         for cred in cred_entries:
-            print(f'updating creds: {cred}')
+            # print(f'updating creds: {cred}')
             # Check if cred already present
             vicCred = Credential_Result.objects.filter(module_session_captured=self,
+                                                       ip=cred["vic_ip"],
                                                        type=cred["cred_type"],
                                                        username=cred["username"],
                                                        password=cred["password"])
             if len(vicCred) == 0:
-                print("updating creds: new entry ")
+                # print("updating creds: new entry ")
                 # Not present, create
                 newVicCred = Credential_Result(module_session_captured=self,
+                                               ip=cred["vic_ip"],
                                                type=cred["cred_type"],
                                                username=cred["username"],
                                                password=cred["password"])
@@ -103,12 +106,29 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
                 # try to link to device (none if not found)
                 vicDev = Device_Instance.objects.filter(module_session_captured=self, ip=cred["vic_ip"]).first()
                 if vicDev is not None:
-                    print(f"found device ({vicDev}) associated with credentials")
+                    # print(f"found device ({vicDev}) associated with credentials")
                     newVicCred.device = vicDev
                 newVicCred.save()
-                print(f'New cred found and saved: {newVicCred}')
-            else:
-                print("updating creds: already present")
+                # TODO - logging!
+            #     print(f'New cred found and saved: {newVicCred}')
+            # else:
+            #     print("updating creds: already present")
+                
+    def get_cred_results(self)->[Credential_Result]:
+        """Returns all credential results that have used on AP during session"""
+        return [c for c in Credential_Result.objects.filter(module_session_captured=self)]
+    
+    def get_and_update_cred_results(self)->[Credential_Result]:
+        """Updates and returns all credential results that have used on AP during session"""
+        self.update_credentials()
+        return self.get_cred_results()
+    
+    def update(self):
+        """Updates victims and credentials """
+        victims = self.get_and_update_victims()
+        creds = self.get_and_update_cred_results()
+        return victims, creds
+            
         
     
     

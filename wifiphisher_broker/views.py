@@ -160,11 +160,14 @@ def wifiphisher_captive_portal_monitor(request):
     wphisher_session = wphisher_sessions[0]
     
     # Update connected victims
-    victims=wphisher_session.get_and_update_victims()
-    wphisher_session.update_credentials()
+    # victims=wphisher_session.get_and_update_victims()
+    # wphisher_session.update_credentials()
+    victims, creds = wphisher_session.update()
     return render(request, 'wifiphisher_broker/captive_portal_monitor.html', 
                   {"monitor": wphisher_session, 
                    "victims":victims,
+                   "credentials": creds,
+                   "credential_type":wphisher_session.cred_type,
                    "update_rate": cnf.MONITOR_UPDATE_RATE})
 
 def wifiphisher_captive_portal_stop(request):
@@ -193,51 +196,28 @@ def wifiphisher_captive_portal_stop(request):
                 message=messages.error(request, f"Failed to kill pid: {s.pid}, system restart suggested")
     return redirect('captive_portal_home')
 
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-# Utils TODO - move this into utils
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-# def get_scenarios()->[str]:
-#     """
-#     Lists scenarios available for wifiphisher captive portal. Declared in wifiphisher config
-#     TODO - Perhaps could be acertained from the tool itself?
-#     """
-#     # TODO - implement properaly
-#     return cnf.PHISHING_SCENARIOS.keys()
-
-# def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive_Portal_Session]):
-#     """
-#     From a global session returns any active wifiphisher session(s)
-#     """
-#     active_sessions = Wifiphisher_Captive_Portal_Session.objects.filter(session=session, active=True)
-#     if len(active_sessions) > 0:
-#         return True, [active_session for active_session in active_sessions]
-#     else:
-#         return False, None
+def wifiphisher_captive_portal_results(request):
+    """Show previous results from a captive portal session"""
+    # Auth
+    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access captive portals")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
     
-# def get_new_log_paths(interface, scenario, essid):
-#     """
-#     Uses config to determine log file names, these files are used to store info into django
-#     """
-#     ts=datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-#     filename_prefix=f'{ts}_{interface}_{scenario}_{essid}'
-#     log_path=os.path.join(cnf.WIFIPHISHER_LOG_DIR, f"{filename_prefix}.log")
-#     cred_path=os.path.join(cnf.WIFIPHISHER_LOG_DIR, f"{filename_prefix}_cred.log")
-#     return log_path, cred_path
+    session_id=request.GET.get('session_id', None)
+    if session_id is None:
+        message=messages.error(request, "Must select a session to view it's results, no session_id in request params")
+        return redirect('captive_portal_home')    
     
-# def handle_active_sessions(request, sessions):
-#     """
-#     Helper function for useful messages on home page.
+    wphisher_session=Wifiphisher_Captive_Portal_Session.objects.all().filter(id=session_id).first()
+    victims=wphisher_session.get_victims()
+    creds=wphisher_session.get_cred_results()
+    wphisher_context={}
     
-#     Additionally Captive portal (in v1) is not designed to have multiple sessions running, this programmatically closes
-#     if multiple are found and provides debug
-#     """
-#     if len(sessions) > 1:
-#         message=messages.error(request, "Multiple captive portal sessions detected, killing all")
-#         for s in sessions[1:]:
-#             killed = s.end_module_session()
-#             if killed:
-#                 message=messages.success(request, f"Killed pid: {s.pid}")
-#             else:
-#                 message=messages.error(request, f"Failed to kill pid: {s.pid}, suggested to restart system")
-#     else:
-#         message=messages.success(request, f"Captive portal session running with interface: {s.interface}, scenario: {s.scenario}, ESSID: {s.essid} detected, killing all")
+    return render(request, 'wifiphisher_broker/captive_portal_results.html', 
+                  {"monitor": wphisher_session, 
+                   "victims":victims,
+                   "credentials": creds,
+                   "credential_type":wphisher_session.cred_type})

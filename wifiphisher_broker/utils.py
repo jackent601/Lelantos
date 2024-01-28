@@ -106,6 +106,7 @@ def parse_creds_log(cred_file, cred_type)->([dict], bool):
   
     return cred_results, False
 
+# TODO - get the capture time
 def parse_cred_entry(cred_entry, cred_type, regex_pattern):
     """ Used to extract info from each cred entry """
     cred_entry_strip=cred_entry.strip().replace("\n", "")

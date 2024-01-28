@@ -70,7 +70,7 @@
                         {% for hc in historic_captures %}
                             <tr>
                                 
-                                <td><a href="{% url 'home' %}?scan_id={{ hc.id }}">{{ hc.start_time }}</a></td>
+                                <td><a href="{% url 'captive_portal_results' %}?session_id={{ hc.id }}">{{ hc.start_time }}</a></td>
                                 <td>{{ hc.end_time }} </td>
                                 <td>{{ hc.scenario }}</td>
                             </tr>

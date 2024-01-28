@@ -3,13 +3,12 @@
     {% load static %}
 
     {% if user.is_authenticated %}
-        <meta http-equiv="refresh" content="{{ update_rate }}" />
         <div class="card" style="width: 38rem;">
             <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
             <div class="card-body">
             
                 <h4>Captive Portal</h4>
-                <h5>Status: Live<h5>
+                <h5>Status: Historic Session<h5>
 
                 <!-- Captive Portal Form -->
 
@@ -46,24 +45,11 @@
                         </div>
                     </form>
                 </fieldset>
-
-                <div class="card-body">
-                    <a href="{% url 'captive_portal_monitor' %}">
-                        <button class="btn btn-primary" type="submit">
-                            Update Victims
-                        </button>
-                    </a>
-                    <a href="{% url 'captive_portal_stop' %}">
-                        <button class="btn btn-primary" type="submit">
-                            Stop
-                        </button>
-                    </a>
-                </div>
             </div>
 
             <!-- Live details - devices -->
             <div class="card-body">
-                <h5>Current Victims</h5>
+                <h5>Victims</h5>
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -99,7 +85,6 @@
                     <tbody>
                         {% for c in credentials %}
                             <tr>
-                                
                                 <td>{{ c.ip }}</td>
                                 <td>{{ c.username }} </td>
                                 <td>{{ c.password }}</td>
@@ -107,6 +92,14 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+
+            <div class="card-body">
+                <a href="{% url 'captive_portal_home' %}">
+                    <button class="btn btn-primary" type="submit">
+                        back
+                    </button>
+                </a>
             </div>
         </div>
     {% endif %}
