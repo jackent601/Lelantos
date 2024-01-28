@@ -19,3 +19,4 @@ wifiphisher_broker/__pycache__/*
 wifiphisher_broker/migrations/*
 wifiphisher_broker/migrations/__pycache__/*
 wifiphisher_broker/logs/temp/*
+wifiphisher_broker/logs/*
