@@ -2,19 +2,9 @@ import subprocess
 import time
 from django.db import models
 from wp3_basic.models import Session, Module_Session
-from wifiphisher_broker.utils import read_dnsmasq_file, get_victims_currently_connected
+from wifiphisher_broker.utils import read_dnsmasq_file, get_victims_currently_connected, parse_creds_log
+import wifiphisher_broker.config as cfg
 
-MODULE_NAME="wifiphisher_captive_portal"
-ARP_FLUSH_WAIT_TIME=3 # time to wait before flushing arp after session close
-
-# to be moved into 'basic'
-# TODO - review ng in the manner
-class Credential_Result(models.Model):
-    module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
-    username=models.CharField(max_length=200)
-    password=models.CharField(max_length=200)
-    capture_time=models.CharField(max_length=200)
-    
 # It's an 'instance' because mac addresses, and ip constantly change. 
 # Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
 # And begin wider assoications
@@ -24,16 +14,28 @@ class Device_Instance(models.Model):
     ip=models.CharField(max_length=200)
     private_ip=models.CharField(max_length=200)
     type=models.CharField(max_length=200)
+    first_seen=models.CharField(max_length=200)
+
+# to be moved into 'basic'
+# TODO - review ng in the manner
+class Credential_Result(models.Model):
+    module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+    device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
+    type=models.CharField(max_length=200)
+    username=models.CharField(max_length=200)
+    password=models.CharField(max_length=200)
+    capture_time=models.CharField(max_length=200)
 
 # TODO - delete dnsmasq once session ended - sometimes automatic?
 class Wifiphisher_Captive_Portal_Session(Module_Session):
-    module_name=MODULE_NAME
+    module_name=cfg.MODULE_NAME
     interface = models.CharField(max_length=200)
     scenario = models.CharField(max_length=200)
     essid = models.CharField(max_length=2000)
     log_file_path = models.CharField(max_length=2000)
-    cred_file_path = models.CharField(max_length=2000)
+    cred_file_path = models.CharField(max_length=200)
     aux_data = models.CharField(max_length=2000)
+    cred_type = models.CharField(max_length=2000)
     
     def update_victims(self):
         """
@@ -71,12 +73,44 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
     def flush_victim_arp(self)->bool:
         """ Used after ending session to delete arp entries to prime any new sessions shortly after"""
         # Need to wait for potal to fully close
-        time.sleep(ARP_FLUSH_WAIT_TIME)
+        time.sleep(cfg.ARP_FLUSH_WAIT_TIME)
         victims = self.get_victims()
         for vic in victims:
             vic_ip = vic.ip
             subprocess.run(["sudo", "arp", "-d", vic_ip])
         return True
+    
+    def update_credentials(self):
+        """ Read credential file to see if any new hits, links credentials to devices of the session """
+        cred_entries, _err = parse_creds_log(self.cred_file_path, self.cred_type)
+        if cred_entries is None or _err:
+            return
+        for cred in cred_entries:
+            print(f'updating creds: {cred}')
+            # Check if cred already present
+            vicCred = Credential_Result.objects.filter(module_session_captured=self,
+                                                       type=cred["cred_type"],
+                                                       username=cred["username"],
+                                                       password=cred["password"])
+            if len(vicCred) == 0:
+                print("updating creds: new entry ")
+                # Not present, create
+                newVicCred = Credential_Result(module_session_captured=self,
+                                               type=cred["cred_type"],
+                                               username=cred["username"],
+                                               password=cred["password"])
+                
+                # try to link to device (none if not found)
+                vicDev = Device_Instance.objects.filter(module_session_captured=self, ip=cred["vic_ip"]).first()
+                if vicDev is not None:
+                    print(f"found device ({vicDev}) associated with credentials")
+                    newVicCred.device = vicDev
+                newVicCred.save()
+                print(f'New cred found and saved: {newVicCred}')
+            else:
+                print("updating creds: already present")
+        
+    
     
     
 def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive_Portal_Session]):

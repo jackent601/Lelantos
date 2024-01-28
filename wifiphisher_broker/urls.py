@@ -1,5 +1,5 @@
 from django.urls import path
-from wifiphisher_broker.wifiphisher_config import WIFIPHISHER_LOG_DIR
+from wifiphisher_broker.config import WIFIPHISHER_LOG_DIR
 import os
 
 from . import views

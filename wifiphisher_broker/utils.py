@@ -5,12 +5,9 @@ from django.contrib import messages
 # Models
 from wp3_basic.models import Session
 
-import wifiphisher_broker.wifiphisher_config as cnf
+import wifiphisher_broker.config as cnf
 
 import os, datetime
-
-
-DNS_MASQ_PATH="/var/lib/misc/dnsmasq.leases" # this will not change in linux
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # Victim Tracking
@@ -21,10 +18,10 @@ def read_dnsmasq_file()->([dict], bool):
     returns victim_list, error.
     This is semi-persistent so needs cross referenced against active arp results to see if a 'live' connection
     """
-    if (not os.path.isfile('/var/lib/misc/dnsmasq.leases')):
+    if (not os.path.isfile(cnf.DNS_MASQ_PATH)):
         return None, True
     victim_list=[]
-    with open(DNS_MASQ_PATH, "r") as dnsmasq_leases:
+    with open(cnf.DNS_MASQ_PATH, "r") as dnsmasq_leases:
         for line in dnsmasq_leases:
             line = line.split()
             if not line:
@@ -80,7 +77,71 @@ def get_victims_currently_connected(iface_filter: str)->([dict], bool):
             arp["vic_dev_type"] = "unknown"
             active_victims.append(arp)
     return active_victims, False
-     
+
+def parse_creds_log(cred_file, cred_type)->([dict], bool):
+    """
+    read dnsmasq.leases file to see devices which have connected at some point
+    returns victim_list, error.
+    This is semi-persistent so needs cross referenced against active arp results to see if a 'live' connection
+    """
+    # Validate
+    if (not os.path.isfile(cred_file)):
+        return None, True
+    
+    # Prep parsing
+    if cred_type == cnf.CRED_TYPE_USER:
+        pattern = cnf.CRED_USER_REGEX_PATTERN
+    elif cred_type == cnf.CRED_TYPE_WPA_PASSWORD:
+        pattern = cnf.CRED_WPA_REGEX_PATTERN
+    else:
+        return None, True
+    
+    # Parse
+    cred_results = []
+    with open(cred_file, "r") as creds:
+        for cred in creds:
+            cred_entry, _err = parse_cred_entry(cred, cred_type, pattern)
+            if cred_entry is not None and not _err:
+                cred_results.append(cred_entry)
+  
+    return cred_results, False
+
+def parse_cred_entry(cred_entry, cred_type, regex_pattern):
+    """ Used to extract info from each cred entry """
+    cred_entry_strip=cred_entry.strip().replace("\n", "")
+    details = regex_pattern.findall(cred_entry_strip)
+    
+    if len(details) == 0:
+        print(f"could not parse {cred_entry}. check regex pattern: {regex_pattern}, matches: {details}")
+        return None, True
+    
+    # Get tuple
+    details = details[0]
+    
+    # Handle match
+    if cred_type == cnf.CRED_TYPE_USER:
+        if len(details) < 3:
+            print(f"could not parse {cred_entry}. check regex pattern: {regex_pattern}, matches: {details}")
+            return None, True
+        else:
+            ip, user, pswd = details
+            return {"cred_type":cnf.CRED_TYPE_USER,"vic_ip":ip,"username":user,"password":pswd}, False
+    
+    elif cred_type == cnf.CRED_TYPE_WPA_PASSWORD:
+        if len(details) < 2:
+            print(f"could not parse {cred_entry}. check regex pattern")
+            return None, True
+        else:
+            ip, wpa = details
+            return {"cred_type":cnf.CRED_TYPE_WPA_PASSWORD, "vic_ip":ip, "username":"", "password":wpa}, False
+    
+    else:
+        print(f"cred type: {cred_type} not handled in parsing")
+        return None, True
+
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+# Management
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 def get_scenarios()->[str]:
     """

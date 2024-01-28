@@ -9,7 +9,7 @@ from wifiphisher_broker.models import Wifiphisher_Captive_Portal_Session, get_cu
 
 
 
-import wifiphisher_broker.wifiphisher_config as cnf
+import wifiphisher_broker.config as cnf
 import utils.utils as gen_utils
 import wifiphisher_broker.utils as wph_utils
 import glob, os, datetime, time, subprocess
@@ -89,7 +89,8 @@ def wifiphisher_captive_portal_launch(request):
     if scenario not in valid_scenarios:
         message=messages.error(request, f"Scenario: {scenario} not valid, please select valid scenario.")
         return redirect('captive_portal_home')
-    essid=str(request.POST['essid'])    
+    essid=str(request.POST['essid'])   
+    cred_type = cnf.SCENARIO_CRED_TYPES[scenario]
     
     # Launch process!
     log_path, cred_path = wph_utils.get_new_log_paths(interface, scenario, essid) 
@@ -121,7 +122,8 @@ def wifiphisher_captive_portal_launch(request):
                                                     scenario=scenario,
                                                     essid=essid,
                                                     log_file_path=log_path,
-                                                    cred_file_path=cred_path)
+                                                    cred_file_path=cred_path,
+                                                    cred_type=cred_type)
     wPhSession.save()
     
     # Redirect to monitor
@@ -159,6 +161,7 @@ def wifiphisher_captive_portal_monitor(request):
     
     # Update connected victims
     victims=wphisher_session.get_and_update_victims()
+    wphisher_session.update_credentials()
     return render(request, 'wifiphisher_broker/captive_portal_monitor.html', 
                   {"monitor": wphisher_session, 
                    "victims":victims,
