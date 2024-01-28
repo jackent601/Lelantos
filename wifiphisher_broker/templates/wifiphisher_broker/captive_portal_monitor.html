@@ -87,11 +87,13 @@
 
             <!-- Live details - credentials -->
             <div class="card-body">
-                <h5>Credentials ({{ credential_type }})</h5>
+                <h5>Credential Hits ({{ credential_type }})</h5>
                 <table class="table table-striped">
                     <thead>
                         <tr>
+                        <th scope="col">MAC</th>
                         <th scope="col">IP</th>
+                        <th scope="col">Type</th>
                         <th scope="col">Username</th>
                         <th scope="col">Password</th>
                         </tr>
@@ -99,8 +101,15 @@
                     <tbody>
                         {% for c in credentials %}
                             <tr>
-                                
-                                <td>{{ c.ip }}</td>
+                                {% if c.device is not none %}
+                                    <td>{{ c.device.mac_addr }}</td>
+                                    <td>{{ c.device.ip }}</td>
+                                    <td>{{ c.device.type }}</td>
+                                {% else %}
+                                    <td>?</td>
+                                    <td>{{ c.ip }}</td>
+                                    <td>?</td>
+                                {% endif %}
                                 <td>{{ c.username }} </td>
                                 <td>{{ c.password }}</td>
                             </tr>
