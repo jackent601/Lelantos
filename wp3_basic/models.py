@@ -5,6 +5,14 @@ import random
 from django.contrib.auth.models import User
 import subprocess
 
+from django.contrib.gis.db import models as gisModels
+
+class TestGEO(gisModels.Model):
+    name = gisModels.CharField(max_length=100)
+    location = gisModels.PointField()
+    address = gisModels.CharField(max_length=100)
+    city = gisModels.CharField(max_length=50)
+
 MAX_SESSION_ID=9223372036854775807
 TIME_FORMAT="%m/%d/%Y-%H:%M:%S"
 # TODO - dubplicate session stuff could be better streamlined
