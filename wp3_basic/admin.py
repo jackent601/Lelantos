@@ -8,9 +8,10 @@ admin.site.register(Session)
 admin.site.register(Wp3_Authentication_Token)
 admin.site.register(User_Action)
 
+admin.site.register(TestGEO)
 
-@admin.register(TestGEO)
-class ShopAdmin(OSMGeoAdmin):
-    list_display = ('name', 'location')
+# @admin.register(TestGEO)
+# class LocationAdmin(OSMGeoAdmin):
+#     list_display = ('name', 'city', 'location')
 
 
