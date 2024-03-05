@@ -34,7 +34,7 @@ ALLOWED_HOSTS = ["192.168.0.76", "127.0.0.1"]
 INSTALLED_APPS = [
     'portal_auth.apps.PortalAuthConfig',
     'wp3_basic.apps.Wp3BasicConfig',
-    'wp3_broker.apps.Wp3BrokerConfig',
+    # 'wp3_broker.apps.Wp3BrokerConfig',
     'aircrack_ng_broker.apps.AircrackNgBrokerConfig',
     'wifiphisher_broker.apps.WifiphisherBrokerConfig',
     'django.contrib.gis',
@@ -131,8 +131,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE=True
 
-# wp3 api settings
-from wp3_broker.wp3_api_config import *
+# wp3 api settings - deprecated
+# from wp3_broker.wp3_api_config import *
 
 # aircrack settings - TODO - move to urls pattern
 from aircrack_ng_broker.aircrack_ng_config import *

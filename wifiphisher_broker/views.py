@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils import timezone
-import portal_auth.views as auth_utils
+import portal_auth.utils as auth_utils
 
 # Models
 # from wp3_basic.models import Session
