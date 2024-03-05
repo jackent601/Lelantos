@@ -4,12 +4,12 @@ from django.contrib import messages
 import requests
 
 from wp3_basic.models import Session
-from portal_auth.views import get_session_from_request
+import portal_auth.utils as auth_utils
 import wp3_broker.utils as wp3_api_utils
 
 # Makes a call to expected wp3 api to check wp3 is 'alive'
 def check_wp3_api_running(request):
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wp3 scan")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wp3 scan")
     if _error:
         return _redirect
     if active_session is None:
@@ -27,7 +27,7 @@ def check_wp3_api_running(request):
 
     
 def refresh_wp3_api_auth_token_for_session(request):
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wp3 scan")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wp3 scan")
     if _error:
         return _redirect
     if active_session is None:
@@ -50,7 +50,7 @@ def refresh_wp3_api_auth_token_for_session(request):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 def wp3_ap_config(request):
     # Handle Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wp3 info")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wp3 info")
     if _error:
         return _redirect
     if active_session is None:
@@ -71,7 +71,7 @@ def wp3_ap_config(request):
 
 def start_wp3_rest_server(request):
     # Handle Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to start wp3")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to start wp3")
     if _error:
         return _redirect
     if active_session is None:

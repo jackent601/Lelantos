@@ -7,12 +7,6 @@ import subprocess
 
 from django.contrib.gis.db import models as gisModels
 
-class TestGEO(gisModels.Model):
-    name = gisModels.CharField(max_length=100)
-    location = gisModels.PointField()
-    address = gisModels.CharField(max_length=100)
-    city = gisModels.CharField(max_length=50)
-
 MAX_SESSION_ID=9223372036854775807
 TIME_FORMAT="%m/%d/%Y-%H:%M:%S"
 # TODO - dubplicate session stuff could be better streamlined
@@ -33,6 +27,13 @@ class Session(models.Model):
     def __str__(self):
         time_formated=self.start_time.strftime(TIME_FORMAT)
         return f"Session ({self.session_id}) started at {time_formated}, from src_ip: {self.src_ip}"
+    
+class Location(gisModels.Model):
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    name = gisModels.CharField(max_length=100)
+    location = gisModels.PointField()
+    area = gisModels.CharField(max_length=100)
+    remarks = gisModels.CharField(max_length=1000)
 
 """
     Allows tracking of arbitrary linux processes for modules
@@ -40,6 +41,7 @@ class Session(models.Model):
 """
 class Module_Session(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE)
     module_name = models.CharField(max_length=2000)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True)
@@ -52,6 +54,8 @@ class Module_Session(models.Model):
         self.active=False
         self.save()
         return ended
+
+
     
 class Wp3_Authentication_Token(models.Model):
     # TODO - move session to Wp3RestSession

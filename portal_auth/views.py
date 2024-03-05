@@ -6,7 +6,9 @@ from wp3_basic.models import Session, get_new_valid_session_id, Module_Session
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from wp3_broker.utils import wp3_api_running
+import portal_auth.utils as auth_utils
+
+# from wp3_broker.utils import wp3_api_running
 
 def login_user(request: HttpRequest):
     # Catch first visit
@@ -24,16 +26,18 @@ def login_user(request: HttpRequest):
         return redirect('login')
     
     login(request, _user)
-    new_session = start_new_session_for_user(request, _user)
+    new_session = auth_utils.start_new_session_for_user(request, _user)
     started_at=new_session.start_time.strftime("%m/%d/%Y - %H:%M:%S")
-    message=messages.success(request, f"logged in, session id: {new_session.session_id}, started: {started_at}") 
     
-    # Check Server
-    if wp3_api_running():
-        message=messages.warning(request, "wp3 server already running") 
-    else:
-        message=messages.success(request, "wp3 server ready to start")
-    return redirect('home')
+    # TODO - logging!!
+    # message=messages.success(request, f"logged in, session id: {new_session.session_id}, started: {started_at}") 
+    # # Check Server
+    # if wp3_api_running():
+    #     message=messages.warning(request, "wp3 server already running") 
+    # else:
+    #     message=messages.success(request, "wp3 server ready to start")
+    message=messages.success(request, "login succesful, please set session location")
+    return redirect('setLocation')
 
 
 
@@ -71,44 +75,44 @@ def logout_user(request: HttpRequest):
     
     
 # Utils
-def get_session_from_request(request: HttpRequest, error_msg="You must be logged in to access this"):
-    """
-    gets all active sessions associated with a user from request
-    return:
-        Session                - session, if found
-        HttpResponse(Redirect) - optional, if session invalid
-        Bool                   - error, if invalid
-    """
-    # Catch Invalid
-    if not request.user.is_authenticated:
-        message=messages.error(request, error_msg)
-        return None, redirect('home'), True
+# def get_session_from_request(request: HttpRequest, error_msg="You must be logged in to access this"):
+#     """
+#     gets all active sessions associated with a user from request
+#     return:
+#         Session                - session, if found
+#         HttpResponse(Redirect) - optional, if session invalid
+#         Bool                   - error, if invalid
+#     """
+#     # Catch Invalid
+#     if not request.user.is_authenticated:
+#         message=messages.error(request, error_msg)
+#         return None, redirect('home'), True
     
-    # Valid user, get session
-    active_sessions = Session.objects.all().filter(user=request.user, active=True).first()
-    return active_sessions, None, False
+#     # Valid user, get session
+#     active_sessions = Session.objects.all().filter(user=request.user, active=True).first()
+#     return active_sessions, None, False
 
-def start_new_session_for_user(request: HttpRequest, user: User)->Session:
-    """
-    Creates a new session for a user from a request. Also sets any existing session to inactive.
-    A user should only ever have 1 active session at a time
-    returns:
-        Session    - None if error
-    """
-    # Close existing sessions
-    qs = Session.objects.all().filter(user=user, active=True)
-    if len(qs) > 0:
-        for session in qs:
-            session.active=False
-            session.end_time=timezone.now()
-            session.save()
-    # Now create new sessions
-    _src_ip=request.META["REMOTE_ADDR"]
-    _start_time=timezone.now()
-    _session_id=get_new_valid_session_id()
-    session=Session(user=user, session_id=_session_id, src_ip=_src_ip, start_time=_start_time, active=True)
-    session.save()  
-    return session
+# def start_new_session_for_user(request: HttpRequest, user: User)->Session:
+#     """
+#     Creates a new session for a user from a request. Also sets any existing session to inactive.
+#     A user should only ever have 1 active session at a time
+#     returns:
+#         Session    - None if error
+#     """
+#     # Close existing sessions
+#     qs = Session.objects.all().filter(user=user, active=True)
+#     if len(qs) > 0:
+#         for session in qs:
+#             session.active=False
+#             session.end_time=timezone.now()
+#             session.save()
+#     # Now create new sessions
+#     _src_ip=request.META["REMOTE_ADDR"]
+#     _start_time=timezone.now()
+#     _session_id=get_new_valid_session_id()
+#     session=Session(user=user, session_id=_session_id, src_ip=_src_ip, start_time=_start_time, active=True)
+#     session.save()  
+#     return session
     
         
     

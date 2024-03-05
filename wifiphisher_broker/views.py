@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils import timezone
-from portal_auth.views import get_session_from_request
+import portal_auth.views as auth_utils
 
 # Models
 # from wp3_basic.models import Session
@@ -22,7 +22,7 @@ import glob, os, datetime, time, subprocess
 # HOME
 def wifiphisher_captive_portal_home(request):
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to run captive portals")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to run captive portals")
     if _error:
         return _redirect
     if active_session is None:
@@ -62,7 +62,7 @@ def wifiphisher_captive_portal_home(request):
 # LAUNCH
 def wifiphisher_captive_portal_launch(request):
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to run captive portals")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to run captive portals")
     if _error:
         return _redirect
     if active_session is None:
@@ -133,7 +133,7 @@ def wifiphisher_captive_portal_launch(request):
 # MONITOR
 def wifiphisher_captive_portal_monitor(request):
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to monitor captive portals")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to monitor captive portals")
     if _error:
         return _redirect
     if active_session is None:
@@ -175,7 +175,7 @@ def wifiphisher_captive_portal_stop(request):
     Stop all captive portal sessions for user (there should only be 1 anyway)
     """
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access captive portals")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access captive portals")
     if _error:
         return _redirect
     if active_session is None:
@@ -199,7 +199,7 @@ def wifiphisher_captive_portal_stop(request):
 def wifiphisher_captive_portal_results(request):
     """Show previous results from a captive portal session"""
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access captive portals")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access captive portals")
     if _error:
         return _redirect
     if active_session is None:

@@ -4,12 +4,12 @@
     {% if user.is_authenticated %}
         <div class="row">
                 <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/server_health/serverHealth5.png' %}" alt="Card image cap">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/location/location.png' %}" alt="Card image cap">
                     <div class="col text-center">
                         <div class="card-body">
-                            <h5 class="card-title">Wp3 Server</h5>
-                            <p class="card-text">Check Wp3 server</p>
-                            <a href="{% url 'wp3_server_health' %}" class="btn btn-primary">Server Status</a>
+                            <h5 class="card-title">Location</h5>
+                            <p class="card-text">Update Session Location</p>
+                            <a href="{% url 'setLocation' %}" class="btn btn-primary">See Map</a>
                         </div>
                     </div>
                 </div>
@@ -18,18 +18,8 @@
                     <div class="col text-center">
                         <div class="card-body">
                             <h5 class="card-title">Wifi Scan</h5>
-                            <p class="card-text">Spin up wp3 Scan, actually maybe aircrack-ng</p>
+                            <p class="card-text">Aircrack-ng wifi monitoring</p>
                             <a href="{% url 'ng_wifi_scan_home' %}" class="btn btn-primary">Scan</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/ap/dragon2.png' %}" alt="Card image cap">
-                    <div class="col text-center">
-                        <div class="card-body">
-                            <h5 class="card-title">Access Point</h5>
-                            <p class="card-text">Spin up wp3 AP</p>
-                            <a href="{% url 'wp3_ap_config' %}" class="btn btn-primary">AP</a>
                         </div>
                     </div>
                 </div>
@@ -38,8 +28,18 @@
                     <div class="col text-center">
                         <div class="card-body">
                             <h5 class="card-title">Captive Portal</h5>
-                            <p class="card-text">Spin up wp3 Captive Portal</p>
+                            <p class="card-text">Wifiphisher Captive Portal</p>
                             <a href="{% url 'captive_portal_home' %}" class="btn btn-primary">Captive Portal</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/analysis/analysis.png' %}" alt="Card image cap">
+                    <div class="col text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Analysis</h5>
+                            <p class="card-text">Study data from this session and more</p>
+                            <a href="{% url 'wp3_ap_config' %}" class="btn btn-primary">Investigate</a>
                         </div>
                     </div>
                 </div>

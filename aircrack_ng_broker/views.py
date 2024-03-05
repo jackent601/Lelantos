@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from aircrack_ng_broker.models import *
-from portal_auth.views import get_session_from_request
+import portal_auth.utils as auth_utils
 
 import glob, os, datetime, time, subprocess
 
@@ -18,7 +18,7 @@ MINIMUM_SCAN_TIME_s=15
 # HOME
 def ng_wifi_scan_home(request):
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
         return _redirect
     if active_session is None:
@@ -39,7 +39,7 @@ def ng_wifi_scan_home(request):
 # RESULTS
 def ng_wifi_show_scan_results(request):
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
         return _redirect
     if active_session is None:
@@ -57,7 +57,7 @@ def ng_wifi_show_scan_results(request):
 # RUN SCAN
 def ng_wifi_run_scan(request):
     # Auth
-    active_session, _redirect, _error = get_session_from_request(request, "You must be logged in to access wifi scans")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
         return _redirect
     if active_session is None:
