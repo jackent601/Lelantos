@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpRequest
 from django.utils import timezone
 from django.contrib import messages
-from .models import Location 
-from .forms import LocationEntryForm
+from wp3_basic.models import Location 
+from wp3_basic.forms import LocationEntryForm
 import portal_auth.utils as auth_utils
 
 

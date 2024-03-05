@@ -5,3 +5,8 @@ if [[ "$#" -lt 1 ]]; then
 fi
 
 python manage.py startapp $1
+
+echo "success! Next steps are:"
+echo "\tAdd to app's AppConfig to INSTALLED_APPS in settings"
+echo "\tRegister models in admin portal if appropriate"
+echo "\tGet cracking on the apps urls!"

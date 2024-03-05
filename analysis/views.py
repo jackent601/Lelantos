@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 import portal_auth.utils as auth_utils
+from analysis.forms import LocationAnalysisForm
 
 # Create your views here.
 def analysis_home(request):
@@ -18,5 +19,6 @@ def analysis_home(request):
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     message=messages.success(request, "Analysis!")
-    return redirect('home')
+    # return redirect('home')
+    return render(request, "analysis/analysis.html", {"form": LocationAnalysisForm()})
     
