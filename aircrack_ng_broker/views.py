@@ -25,6 +25,12 @@ def ng_wifi_scan_home(request):
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
+    # Location
+    location = active_session.getMostRecentLocation()
+    if location is None:
+        message=messages.error(request, "Warning: Must set location before running exploits")
+        return redirect('setLocation')
+    
     # Devices
     wifiDevicesDetails=get_wifi_devices()
     availableDevices=[d["Interface"] for d in wifiDevicesDetails]

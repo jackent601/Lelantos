@@ -35,7 +35,7 @@ def addLocation(request: HttpRequest):
             remarks = request.POST['remarks']
             )
         new_place.save()
-        print("SAVED!")
+        message=messages.success(request, "Location set!")
         return render(request, "wp3_basic/home.html")
     else:
         return render(request, "wp3_basic/addLocation.html", {"form": LocationEntryForm()})

@@ -29,6 +29,12 @@ def wifiphisher_captive_portal_home(request):
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
+    # Location
+    location = active_session.getMostRecentLocation()
+    if location is None:
+        message=messages.error(request, "Warning: Must set location before running exploits")
+        return redirect('setLocation')
+    
     wphisher_context={}
     
     # Check if portal already running

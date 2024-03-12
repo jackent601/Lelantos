@@ -28,6 +28,9 @@ class Session(models.Model):
         time_formated=self.start_time.strftime(TIME_FORMAT)
         return f"Session ({self.session_id}) started at {time_formated}, from src_ip: {self.src_ip}"
     
+    def getMostRecentLocation(self):
+        return self.location_set.first()
+    
 class Location(gisModels.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     name = gisModels.CharField(max_length=100)
