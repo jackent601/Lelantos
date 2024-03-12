@@ -1,15 +1,15 @@
 from django.db import models
-from wp3_basic.models import Session
+from wp3_basic.models import Module_Session
+import aircrack_ng_broker.config as cfg
 
-class Wifi_Scan(models.Model):
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)
-    start_time = models.DateTimeField()
+class Wifi_Scan(Module_Session):
+    module_name=cfg.MODULE_NAME
     duration_s = models.PositiveIntegerField()
     interface = models.CharField(max_length=200)
-    # location = TBD
     
+# TODO - Move to basic
 class Wifi_Scan_Beacon_Result(models.Model):
-    wifi_scan=models.ForeignKey(Wifi_Scan, on_delete=models.CASCADE)
+    wifi_scan=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
     bssid=models.CharField(max_length=200)
     first_time_seen=models.CharField(max_length=200)
     last_time_seen=models.CharField(max_length=200)
@@ -27,7 +27,7 @@ class Wifi_Scan_Beacon_Result(models.Model):
     key=models.CharField(max_length=200)
     
 class Wifi_Scan_Station_Result(models.Model):
-    wifi_scan = models.ForeignKey(Wifi_Scan, on_delete=models.CASCADE)
+    wifi_scan = models.ForeignKey(Module_Session, on_delete=models.CASCADE)
     station_mac=models.CharField(max_length=200)
     first_time_seen=models.CharField(max_length=200)
     last_time_seen=models.CharField(max_length=200)

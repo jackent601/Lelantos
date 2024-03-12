@@ -36,13 +36,24 @@ def ng_wifi_scan_home(request):
     availableDevices=[d["Interface"] for d in wifiDevicesDetails]
     
     # Historic Scans
-    # TODO - carosel type thing?
-    historic_scans=Wifi_Scan.objects.all().filter(session__user=active_session.user).order_by('-start_time')
+    historic_scans=Wifi_Scan.objects.filter(session__user=active_session.user).order_by('-start_time')
     return render(request, 'aircrack_ng_broker/wifi_scan.html', {"info":wifiDevicesDetails, 
                                                                  "device_list":availableDevices, 
                                                                  "historic_scans":historic_scans})
 
 # RESULTS
+def ng_wifi_previous_scans(request):
+    # Auth
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    historic_scans=Wifi_Scan.objects.all().filter(session__user=active_session.user).order_by('-start_time')
+    return render(request, 'aircrack_ng_broker/wifi_scan_previous_scans.html', {"historic_scans":historic_scans})
+
 def ng_wifi_show_scan_results(request):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
@@ -56,7 +67,7 @@ def ng_wifi_show_scan_results(request):
     scan_id=request.GET.get('scan_id', None)
     if scan_id is None:
         message=messages.error(request, "Must select a scan to view it's results, no scan_id in request params")
-        return redirect('ng_wifi_scan_home')
+        return redirect('ng_wifi_previous_scans')
     
     return util_show_scan_results(request, scan_id)
 
@@ -69,6 +80,12 @@ def ng_wifi_run_scan(request):
     if active_session is None:
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
+    
+    # Location
+    location = active_session.getMostRecentLocation()
+    if location is None:
+        message=messages.error(request, "Warning: Must set location before running exploits")
+        return redirect('setLocation')
     
     # Not a post, scan not submitted, show most recent results
     if request.method != "POST":
@@ -95,7 +112,12 @@ def ng_wifi_run_scan(request):
         scanTime=MINIMUM_SCAN_TIME_s
         
     # Create scan object for django
-    wifi_scan=Wifi_Scan(session=active_session, start_time=timezone.now(), duration_s=scanTime, interface=interface)
+    wifi_scan=Wifi_Scan(session=active_session, 
+                        location=location, 
+                        start_time=timezone.now(), 
+                        duration_s=scanTime, 
+                        interface=interface,
+                        active=True)
     wifi_scan.save()
     
     # Run scan
@@ -200,6 +222,11 @@ def ng_wifi_scan(scanObj: Wifi_Scan)->(bool, str, Wifi_Scan):
     time.sleep(scan_time)
     scanProc.terminate()
     scanProc.kill()
+    
+    # End module session
+    scanObj.end_time=timezone.now()
+    scanObj.active=False
+    scanObj.save()
     
     # Reset monitor
     monitor_off = subprocess.run(["sudo", "airmon-ng", "stop", monitor_interface])

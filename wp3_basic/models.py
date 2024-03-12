@@ -49,7 +49,7 @@ class Module_Session(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True)
     active = models.BooleanField()
-    pid = models.PositiveIntegerField()
+    pid = models.PositiveIntegerField(null=True)
     
     def end_module_session(self):
         ended = subprocess.run(["sudo", "kill", "-9", str(self.pid)]).returncode == 0

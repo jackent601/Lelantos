@@ -5,9 +5,7 @@
     {% if user.is_authenticated %}
 
     <div>
-        <a href="{% url 'ng_wifi_scan_home' %}" class="btn btn-primary">
-            Back
-        </a>
+        <button type="button" onclick="javascript:history.back()" class="btn btn-primary">Back</button>
         <br>
         <table class="table table-striped table-dark">
             <thead>
