@@ -1,0 +1,1 @@
+MODULE_NAME="aircrack_ng_wifi_scan"
