@@ -9,6 +9,7 @@ urlpatterns = [
      path("captive_portal_launch/", views.wifiphisher_captive_portal_launch, name="captive_portal_launch"),
      path("captive_portal_monitor/", views.wifiphisher_captive_portal_monitor, name="captive_portal_monitor"),
      path("captive_portal_stop/", views.wifiphisher_captive_portal_stop, name="captive_portal_stop"),
+     path("captive_portal_previous_captures/", views.wifiphisher_captive_portal_previous_captures, name="captive_portal_previous_captures"),
      path("captive_portal_results/", views.wifiphisher_captive_portal_results, name="captive_portal_results"),
 ]
 

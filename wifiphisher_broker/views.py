@@ -75,6 +75,12 @@ def wifiphisher_captive_portal_launch(request):
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
+    # Location
+    location = active_session.getMostRecentLocation()
+    if location is None:
+        message=messages.error(request, "Warning: Must set location before running exploits")
+        return redirect('setLocation')
+    
     # Not a post, scan not submitted, show most recent results
     if request.method != "POST":
         # Message to warn not recent
@@ -121,6 +127,7 @@ def wifiphisher_captive_portal_launch(request):
                                     stderr=subprocess.PIPE)
     # create module session
     wPhSession = Wifiphisher_Captive_Portal_Session(session = active_session,
+                                                    location = location,
                                                     start_time = timezone.now(),
                                                     active=True,
                                                     pid=captive_portal.pid,
@@ -201,6 +208,22 @@ def wifiphisher_captive_portal_stop(request):
             else:
                 message=messages.error(request, f"Failed to kill pid: {s.pid}, system restart suggested")
     return redirect('captive_portal_home')
+
+# RESULTS
+def wifiphisher_captive_portal_previous_captures(request):
+    # Auth
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to run captive portals")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    wphisher_context={}        
+    
+    # Get historic captures
+    wphisher_context["historic_captures"]=Wifiphisher_Captive_Portal_Session.objects.filter(session__user=active_session.user).order_by('-start_time')
+    return render(request, 'wifiphisher_broker/captive_portal_previous_captures.html', wphisher_context)
 
 def wifiphisher_captive_portal_results(request):
     """Show previous results from a captive portal session"""

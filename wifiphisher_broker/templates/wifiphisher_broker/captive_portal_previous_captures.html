@@ -1,0 +1,36 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+
+    {% if user.is_authenticated %}
+        <div class="card" style="width: 38rem;">
+            <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <h4>Captive Portal</h4>
+
+                <!-- Historic Captures -->
+                <h5>Historic Captures</h5>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                        <th scope="col">Start</th>
+                        <th scope="col">Finish</th>
+                        <th scope="col">Scenario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hc in historic_captures %}
+                            <tr>
+                                
+                                <td><a href="{% url 'captive_portal_results' %}?session_id={{ hc.id }}">{{ hc.start_time }}</a></td>
+                                <td>{{ hc.end_time }} </td>
+                                <td>{{ hc.scenario }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
