@@ -72,6 +72,7 @@ def ng_wifi_show_scan_results(request):
     return util_show_scan_results(request, scan_id)
 
 # RUN SCAN
+# TODO - loading swirl screen, checking for results (active=false)
 def ng_wifi_run_scan(request):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
