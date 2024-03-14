@@ -7,7 +7,7 @@ import portal_auth.utils as auth_utils
 # Rendering Map Locations
 from wp3_portal.settings import DEFAULT_LOCATION_SETTINGS 
 import folium
-from wp3_basic.models import Location
+from wp3_basic.models import Session, Location
 from osgeo import ogr, osr
 
 def convert_3857_to_4326 (coords_3857):
@@ -36,6 +36,26 @@ def convert_3857_to_4326 (coords_3857):
 
     return point.GetX(),  point.GetY() 
 
+folium_colours = ["red", 
+                  "blue",
+                  "green",
+                  "purple",
+                  "orange",
+                  "darkred",
+                  "lightred",
+                  "beige",
+                  "darkblue",
+                  "darkgreen",
+                  "cadetblue",
+                  "darkpurple",
+                  "white",
+                  "pink",
+                  "lightblue",
+                  "lightgreen",
+                  "gray",
+                  "black",
+                  "lightgray"]
+
 # Create your views here.
 def analysis_home(request):
     # Auth
@@ -50,11 +70,20 @@ def analysis_home(request):
     # Get Map
     m = folium.Map(location=[DEFAULT_LOCATION_SETTINGS['default_lat'], DEFAULT_LOCATION_SETTINGS['default_lon']], zoom_start=9)
     
-    # Get Capture Locations For User
-    print("printing locs")
-    for loc in Location.objects.filter(session__user=active_session.user):
-        x, y = convert_3857_to_4326([loc.location[0], loc.location[1]])
-        folium.Marker(location=(x,y)).add_to(m)
+    # Get All Sessions for this user
+    colour_idx = 0
+    for sesh in Session.objects.filter(user=active_session.user):
+        # Get all locations for each session
+        for loc in Location.objects.filter(session=sesh):
+            # For each location get all module sessions relating to this location
+            x, y = convert_3857_to_4326([loc.location[0], loc.location[1]])
+            folium.Marker(
+                location=(x,y),
+                tooltip=loc.name,
+                popup="Timberline Lodge",
+                icon=folium.Icon(color=folium_colours[colour_idx], icon='user')
+            ).add_to(m)
+        colour_idx=(colour_idx+1)%len(folium_colours)
     
     return render(request, "analysis/analysis.html", {'map': m._repr_html_()})
     
