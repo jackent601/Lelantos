@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 import subprocess
 
 from django.contrib.gis.db import models as gisModels
+from django.contrib.gis.geos import Point
 
 MAX_SESSION_ID=9223372036854775807
 TIME_FORMAT="%m/%d/%Y-%H:%M:%S"

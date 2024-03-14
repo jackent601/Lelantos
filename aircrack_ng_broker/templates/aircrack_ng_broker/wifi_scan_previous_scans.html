@@ -1,0 +1,38 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+
+    {% if user.is_authenticated %}
+        <div class="card" style="width: 38rem;">
+            <img class="card-img-top" src="{% static 'wp3_basic/imgs/scan/scanDragon.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">Scan</h5>
+                <div>
+                    Historic Scans
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Duration(s)</th>
+                            <th scope="col">Interface</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for historic_scan in historic_scans %}
+                                <tr>
+                                    
+                                    <td><a href="{% url 'ng_wifi_show_scan_results' %}?scan_id={{ historic_scan.id }}">{{ historic_scan.start_time }}</a></td>
+                                    <td>{{ historic_scan.duration_s }} </td>
+                                    <td>{{ historic_scan.interface }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                        <br>
+                        <br>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
