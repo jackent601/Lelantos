@@ -7,6 +7,7 @@ import portal_auth.utils as auth_utils
 # Rendering Map Locations
 from wp3_portal.settings import DEFAULT_LOCATION_SETTINGS 
 import folium
+from folium.plugins import MarkerCluster
 from wp3_basic.models import Session, Location
 from osgeo import ogr, osr
 
@@ -69,21 +70,33 @@ def analysis_home(request):
     
     # Get Map
     m = folium.Map(location=[DEFAULT_LOCATION_SETTINGS['default_lat'], DEFAULT_LOCATION_SETTINGS['default_lon']], zoom_start=9)
+    mapAddObj = m
+    
+    # optional clustering
+    checked=""
+    clusterMarkers = request.GET.get('clusterMarkers', None)
+    if clusterMarkers is not None:
+        marker_cluster = MarkerCluster().add_to(m)
+        mapAddObj = marker_cluster
+        checked="checked"
+        
     
     # Get All Sessions for this user
     colour_idx = 0
     for sesh in Session.objects.filter(user=active_session.user):
         # Get all locations for each session
         for loc in Location.objects.filter(session=sesh):
+            print(loc.location) # debug
+            popupStr = f'{loc.area} ({loc.remarks})'
             # For each location get all module sessions relating to this location
             x, y = convert_3857_to_4326([loc.location[0], loc.location[1]])
             folium.Marker(
                 location=(x,y),
                 tooltip=loc.name,
-                popup="Timberline Lodge",
+                popup=popupStr,
                 icon=folium.Icon(color=folium_colours[colour_idx], icon='user')
-            ).add_to(m)
+            ).add_to(mapAddObj)
         colour_idx=(colour_idx+1)%len(folium_colours)
     
-    return render(request, "analysis/analysis.html", {'map': m._repr_html_()})
+    return render(request, "analysis/analysis.html", {'map': m._repr_html_(), 'checked':checked})
     

@@ -9,4 +9,5 @@ class LocationEntryForm(forms.Form):
                             'default_lat': DEFAULT_LOCATION_SETTINGS['default_lat'],
                             'default_lon': DEFAULT_LOCATION_SETTINGS['default_lon'],
                             'default_zoom': 9,
+                            'display_raw':True,
                             }))
