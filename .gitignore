@@ -28,3 +28,6 @@ wifiphisher_broker/logs/*
 analysis/__pycache__/*
 analysis/migrations/__pycache__/*
 analysis/migrations/*
+
+# Separate git repo
+ConvertGraphToXMLForDrawIO/*
