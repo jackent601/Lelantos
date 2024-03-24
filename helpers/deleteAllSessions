@@ -1,0 +1,11 @@
+#!/bin/bash
+read -r -p "Delete all user session entries, are you sure? [y/N]" -n 1
+echo # (optional) move to a new line
+if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+    sqlite3 dbWithGeo.sqlite 'DELETE FROM wp3_basic_session WHERE 1=1'
+    echo "Deleted"
+else
+    echo "Aborted"
+fi
+
+

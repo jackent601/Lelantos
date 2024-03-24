@@ -1,0 +1,7 @@
+[
+    {"name": "device", "maps_to":"device_instance"},
+    {"name": "credential", "maps_to":"credential_result"},
+    {"name": "module_session_captured", "maps_to":"module_session"},
+    {"name": "wpisher_session", "maps_to":"wifiphisher_captive_portal_session"},
+    {"name": "module_session_ptr", "maps_to":"module_session"}
+]

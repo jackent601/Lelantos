@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     # 'wp3_broker.apps.Wp3BrokerConfig',
     'aircrack_ng_broker.apps.AircrackNgBrokerConfig',
     'wifiphisher_broker.apps.WifiphisherBrokerConfig',
+    'django_extensions',
     'django.contrib.gis',
     'django.contrib.admin',
     'django.contrib.auth',
