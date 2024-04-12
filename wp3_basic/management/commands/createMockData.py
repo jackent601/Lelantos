@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
-from .models import Session, Location, get_new_valid_session_id
+from wp3_basic.models import Session, Location, get_new_valid_session_id
 from django.contrib.gis.geos import GEOSGeometry
+from django.core.management.base import BaseCommand, CommandError
 
 # Settings
 from wp3_portal.settings import BASE_DIR
@@ -90,6 +91,17 @@ def createMockData():
     user = createMockDataUser()
     createMockSessionsAndLocations(user)
     print("Mock Data Initialised")
+    
+class Command(BaseCommand):
+    help = "Creates mockData user with mockData populated"
+
+    def handle(self, *args, **options):
+        user = createMockDataUser()
+        createMockSessionsAndLocations(user)
+        print("Mock Data Initialised")
+        self.stdout.write(
+            self.style.SUCCESS('Mock Data User Created (username:mockData, password:mockData) with mock data initialised')
+        )
         
             
     

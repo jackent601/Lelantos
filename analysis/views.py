@@ -73,12 +73,12 @@ def analysis_home(request):
     mapAddObj = m
     
     # optional clustering
-    checked=""
+    clustered=False
     clusterMarkers = request.GET.get('clusterMarkers', None)
     if clusterMarkers is not None:
         marker_cluster = MarkerCluster().add_to(m)
         mapAddObj = marker_cluster
-        checked="checked"
+        clustered=True
         
     
     # Get All Sessions for this user
@@ -98,5 +98,47 @@ def analysis_home(request):
             ).add_to(mapAddObj)
         colour_idx=(colour_idx+1)%len(folium_colours)
     
-    return render(request, "analysis/analysis.html", {'map': m._repr_html_(), 'checked':checked})
+    return render(request, "analysis/analysis.html", {'map': m._repr_html_(), 'clustered':clustered})
+
+def analysis_by_creds(request):
+    # Auth
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    message=messages.success(request, "Analysis!")
+    
+    # Get Map
+    m = folium.Map(location=[DEFAULT_LOCATION_SETTINGS['default_lat'], DEFAULT_LOCATION_SETTINGS['default_lon']], zoom_start=9)
+    mapAddObj = m
+    
+    # optional clustering
+    clustered=False
+    clusterMarkers = request.GET.get('clusterMarkers', None)
+    if clusterMarkers is not None:
+        marker_cluster = MarkerCluster().add_to(m)
+        mapAddObj = marker_cluster
+        clustered=True
+        
+    
+    # Get All Sessions for this user
+    colour_idx = 0
+    for sesh in Session.objects.filter(user=active_session.user):
+        # Get all locations for each session
+        for loc in Location.objects.filter(session=sesh):
+            print(loc.location) # debug
+            popupStr = f'{loc.area} ({loc.remarks})'
+            # For each location get all module sessions relating to this location
+            x, y = convert_3857_to_4326([loc.location[0], loc.location[1]])
+            folium.Marker(
+                location=(x,y),
+                tooltip=loc.name,
+                popup=popupStr,
+                icon=folium.Icon(color=folium_colours[colour_idx], icon='user')
+            ).add_to(mapAddObj)
+        colour_idx=(colour_idx+1)%len(folium_colours)
+    
+    return render(request, "analysis/analysis_by_creds.html", {'map': m._repr_html_(), 'clustered':clustered})
     

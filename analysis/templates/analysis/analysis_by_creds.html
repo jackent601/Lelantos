@@ -8,9 +8,9 @@
 
             <div class="form-check form-switch">
                 {% if clustered %}
-                <a href="{% url 'analysis_home' %}" class="btn btn-primary">uncluster markers</a>
+                <a href="{% url 'analysis_by_creds' %}" class="btn btn-primary">uncluster markers</a>
                 {% else %}
-                <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
+                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
                 {% endif %}
                 <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">show by locations</a>
                 <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">show by credentials</a>
@@ -18,8 +18,8 @@
             </div>
 
             <br>
-            <p>Locations coloured by session</p>
-
+            <p>Credentials coloured by matching username</p>
+            
                 {{ map|safe }}
             
             <div>
