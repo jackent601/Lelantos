@@ -43,6 +43,7 @@ class Location(gisModels.Model):
     Allows tracking of arbitrary linux processes for modules
     Also allows ending process through model method
 """
+    
 class Module_Session(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
@@ -58,9 +59,30 @@ class Module_Session(models.Model):
         self.active=False
         self.save()
         return ended
-
-
     
+# It's an 'instance' because mac addresses, and ip constantly change. 
+# Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
+# And begin wider assoications
+class Device_Instance(models.Model):
+    module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+    mac_addr=models.CharField(max_length=200)
+    ip=models.CharField(max_length=200)
+    private_ip=models.CharField(max_length=200)
+    type=models.CharField(max_length=200)
+    first_seen=models.CharField(max_length=200)
+
+# to be moved into 'basic'
+# TODO - review ng in the manner
+class Credential_Result(models.Model):
+    module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+    device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
+    ip=models.CharField(max_length=200)
+    type=models.CharField(max_length=200)
+    username=models.CharField(max_length=200)
+    password=models.CharField(max_length=200)
+    capture_time=models.CharField(max_length=200)
+
+# // Deprecated - useful if wifipumpkin improve kali distro
 class Wp3_Authentication_Token(models.Model):
     # TODO - move session to Wp3RestSession
     session = models.OneToOneField(Session, on_delete=models.CASCADE)

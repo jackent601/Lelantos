@@ -1,1 +1,1 @@
-python manage.py createsuperuser --username dummyAdmin --email dummyAdmin@dummyAdmin.com
+python3 manage.py createsuperuser --username dummyAdmin --email dummyAdmin@dummyAdmin.com
