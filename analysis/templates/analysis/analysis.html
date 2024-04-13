@@ -12,13 +12,13 @@
                 {% else %}
                 <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
                 {% endif %}
-                <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">show by locations</a>
-                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">show by credentials</a>
-                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">show by devices</a>
+                <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">locations</a>
+                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">Credentials</a>
+                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">Devices</a>
             </div>
 
             <br>
-            <p>Locations coloured by session</p>
+            <p>All locations</p>
 
                 {{ map|safe }}
             

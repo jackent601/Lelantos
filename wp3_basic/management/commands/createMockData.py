@@ -167,7 +167,7 @@ def createMockDataFromUser(user: User):
         loc, locId = createLocationFromRow(currentSession, row)
         
         # create any module sessions for this location
-        for _, _moduleSession in mockModuleSessions.query('location == @locId').iterrows():
+        for _, _moduleSession in mockModuleSessions.query('locationNum == @locId').iterrows():
             ms, msId = createModuleSessionFromRow(_moduleSession, currentSession, loc)
             
             # create any device instances associated with module session
@@ -177,17 +177,6 @@ def createMockDataFromUser(user: User):
                 # create any credential results associated with device instance
                 for _, credential in mockCredentials.query('deviceNum == @devId').iterrows():
                     credResult = createCredentialResultFromRow(ms, dev, credential)
-                    # capture time
-                # dev=Device_Instance(
-                #     module_session_captured=ms,
-                #     mac_addr=device['mac_addr'],
-                #     ip=device['ip'],
-                #     private_ip=device['private_ip'],
-                #     type=device['type'],
-                #     first_seen=device['first_seen'],
-                # )
-                # dev.save()
-                # print(f"\t\t\tcreated device instance captured in this session: ip={dev.ip}, mac={dev.mac_addr}")
 
 
 def clearMockData():

@@ -1,0 +1,10 @@
+moduleSessionNum,locationNum,module_name,start_time,end_time,active,pid,interface,scenario,essid,log_file_path,cred_file_path,aux_data,cred_type
+1,1,wifiphisher_captive_portal,,,,,wlan1,firmware-upgrade,HomeWifi,,,,wifi-password
+2,1,wifiphisher_captive_portal,,,,,wlan1,oauth-login,Starbucks,,,,user-credentials
+3,2,wifiphisher_captive_portal,,,,,wlan1,wifi_connect,Airport,,,,user-credentials
+4,29,wifiphisher_captive_portal,,,,,wlan2,wifi_connect,shopWifi,,,,user-credentials
+5,30,wifiphisher_captive_portal,,,,,wlan2,wifi_connect,shopWifi,,,,user-credentials
+6,10,wifiphisher_captive_portal,,,,,wlan2,oauth-login,cafeWifi,,,,user-credentials
+7,12,wifiphisher_captive_portal,,,,,wlan2,oauth-login,freeWifi,,,,user-credentials
+8,28,wifiphisher_captive_portal,,,,,wlan2,oauth-login,freeWifi,,,,user-credentials
+9,17,wifiphisher_captive_portal,,,,,wlan2,wifi_connect,homePlaceWifi,,,,user-credentials
