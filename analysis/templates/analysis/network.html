@@ -1,0 +1,68 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+    {% if user.is_authenticated %}
+     
+
+            <h5>Analysis<h5>
+
+            <div class="form-check form-switch">
+                <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">locations</a>
+                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">Credentials</a>
+                <a href="{% url 'network' %}" class="btn btn-primary">Credential Network</a>
+                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">Devices</a>
+            </div>
+
+            <br>
+            <p>Credentials Networked by co-location</p>
+
+          
+            {{ networkGraph|safe }}
+            <br>
+            <p>Credentials with no connections</p>
+            <div class="card" >
+                <table class="table table">
+                    <thead>
+                        <tr>
+                        <th scope="col">Username</th>
+                        <th scope="col">Password</th>
+                        <th scope="col">View</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cred in nodesWithNoEdges %}
+                            <tr>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&username={{ cred.username }}">{{ cred.username }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&password={{ cred.password }}">{{ cred.password }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&username={{ cred.username }}&password={{ cred.password }}">View</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <p>Credentials with Connections</p>
+            <div class="card" >
+                <table class="table table">
+                    <thead>
+                        <tr>
+                        <th scope="col">Username</th>
+                        <th scope="col">Password</th>
+                        <th scope="col">View</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cred in nodesWithEdges %}
+                            <tr>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&username={{ cred.username }}">{{ cred.username }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&password={{ cred.password }}">{{ cred.password }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&username={{ cred.username }}&password={{ cred.password }}">View</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>       
+            
+    
+    {% endif %}
+{% endblock %}
