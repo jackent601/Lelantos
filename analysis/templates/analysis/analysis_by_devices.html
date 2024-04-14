@@ -8,9 +8,9 @@
 
             <div class="form-check form-switch">
                 {% if clustered %}
-                <a href="{% url 'analysis_by_specific_cred' %}?{{ reqParamString }}" class="btn btn-primary">uncluster markers</a>
+                <a href="{% url 'analysis_by_creds' %}" class="btn btn-primary">uncluster markers</a>
                 {% else %}
-                <a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&{{ reqParamString }}" class="btn btn-primary">cluster markers</a>
+                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
                 {% endif %}
                 <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">locations</a>
                 <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">Credentials</a>
@@ -23,7 +23,7 @@
 
             <!-- Map -->
             
-            <p>{{ credMsg }}</p>
+            <p>Locations where devices were seen</p>
                 <div class="card" >
                     {{ map|safe }}
                 </div>
@@ -32,27 +32,24 @@
             
             <br>
             <!-- Credential Results -->
-            <p>All Credentials</p>
-            <p><small>"type:username:password" assumed to uniquely identifier a credential</small></p>
+            <p>All Devices</p>
+            <p><small>WARNING: "mac_addr:type" assumed to be unique identifier however 
+            with rotating mac address security protocols this is not true hence this if POC only</small></p>
             <div class="card" >
                 <table class="table table">
                     <thead>
                         <tr>
+                        <th scope="col">MAC Address</th>
                         <th scope="col">Type</th>
-                        <th scope="col">Username</th>
-                        <th scope="col">Password</th>
-                        <th scope="col">Username:Password</th>
-                        <th scope="col">FilterOnAll</th>
+                        <th scope="col">View</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for cred in uniqueCreds %}
+                        {% for dev in devices %}
                             <tr>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&type={{ cred.type }}">{{ cred.type }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&username={{ cred.username }}">{{ cred.username }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&password={{ cred.password }}">{{ cred.password }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&username={{ cred.username }}&password={{ cred.password }}">filter</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&type={{ cred.type }}&username={{ cred.username }}&password={{ cred.password }}">filter</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&mac_addr={{ dev.mac_addr }}">{{ dev.mac_addr }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&type={{ dev.type }}">{{ dev.type }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&mac_addr={{ dev.mac_addr }}&type={{ dev.type }}">View</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>

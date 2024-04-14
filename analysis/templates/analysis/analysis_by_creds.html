@@ -14,8 +14,9 @@
                 {% endif %}
                 <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">locations</a>
                 <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">Credentials</a>
-                <a href="{% url 'network' %}" class="btn btn-primary">Credential Network</a>
+                <a href="{% url 'credentialNetwork' %}" class="btn btn-primary">Credential Network</a>
                 <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">Devices</a>
+                <a href="{% url 'deviceNetwork' %}" class="btn btn-primary">Device Network</a>
             </div>
 
             <br>
@@ -32,6 +33,7 @@
             <br>
             <!-- Credential Results -->
             <p>All Credentials</p>
+            <p><small>"type:username:password" assumed to uniquely identifier a credential</small></p>
             <div class="card" >
                 <table class="table table">
                     <thead>

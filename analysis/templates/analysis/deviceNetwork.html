@@ -1,0 +1,72 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+    {% if user.is_authenticated %}
+     
+
+            <h5>Analysis<h5>
+
+            <div class="form-check form-switch">
+                <a href="#" class="btn btn-primary">cluster markers</a>
+                <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">locations</a>
+                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">Credentials</a>
+                <a href="{% url 'credentialNetwork' %}" class="btn btn-primary">Credential Network</a>
+                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">Devices</a>
+                <a href="{% url 'deviceNetwork' %}" class="btn btn-primary">Device Network</a>
+            </div>
+
+            <br>
+            <p>Devices Networked by co-location </p>
+            <p><small>WARNING: "mac_addr:type" assumed to be unique identifier however 
+            with rotating mac address security protocols this is not true hence this if POC only</small></p>
+
+          
+            {{ networkGraph|safe }}
+            <br>
+            <p>Devices with no connections</p>
+            <div class="card" >
+                <table class="table table">
+                    <thead>
+                        <tr>
+                        <th scope="col">MAC Address</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">View</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dev in nodesWithNoEdges %}
+                            <tr>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&mac_addr={{ dev.mac_addr }}">{{ dev.mac_addr }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&type={{ dev.type }}">{{ dev.type }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&mac_addr={{ dev.mac_addr }}&type={{ dev.type }}">View</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <p>Devices with Connections</p>
+            <div class="card" >
+                <table class="table table">
+                    <thead>
+                        <tr>
+                        <th scope="col">MAC Address</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">View</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dev in nodesWithEdges %}
+                            <tr>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&mac_addr={{ dev.mac_addr }}">{{ dev.mac_addr }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&type={{ dev.type }}">{{ dev.type }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&mac_addr={{ dev.mac_addr }}&type={{ dev.type }}">View</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>       
+            
+    
+    {% endif %}
+{% endblock %}
