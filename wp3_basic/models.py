@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 import datetime
 import random
@@ -131,6 +132,15 @@ class Model_Result_Instance(models.Model):
     # to filter 'instances' into unqiue sets
     uniqueIdentifiers=()
     modelType=None
+    
+    @classmethod
+    def get_subclasses(cls):
+        content_types = ContentType.objects.filter(app_label=cls._meta.app_label)
+        models = [ct.model_class() for ct in content_types]
+        return [model for model in models
+                if (model is not None and
+                    issubclass(model, cls) and
+                    model is not cls)]
         
     # Methods for analysis = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # - - - - - - - - - - - - - - - - Plotting Models on Map - - - - - - - - - - - - - - - - - - - - -
@@ -202,7 +212,7 @@ class Model_Result_Instance(models.Model):
         """
         # get all credential entrys for this result based on parameters
         reqParams=[]
-        messageBase="Credential Locations for:"
+        messageBase=f"{self._meta.model_name} locations for:"
         filterQuerySet = self.__class__.objects.filter(module_session_captured__session__user=user)
         results=filterQuerySet.filter(**paramDict)
         

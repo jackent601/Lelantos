@@ -48,9 +48,12 @@
                     <tbody>
                         {% for dev in uniqueModels %}
                             <tr>
-                                <td><a href="{% url 'analysis_by_specific_dev' %}?mac_addr={{ dev.mac_addr }}">{{ dev.mac_addr }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_dev' %}?type={{ dev.type }}">{{ dev.type }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_dev' %}?mac_addr={{ dev.mac_addr }}&type={{ dev.type }}">View</a></td>
+                                <!-- loop each key,val defining model -->
+                                {% for devKey, devValue in dev.modelDict.items %}
+                                    <td><a href="{% url 'analysis_by_specific_dev' %}?{{ devKey }}={{ devValue }}">{{ devValue }}</a></td>
+                                {% endfor %}
+                                <!-- add the overall filter -->
+                                <td><a href="{% url 'analysis_by_specific_dev' %}?{{ dev.modelTotalFilterReq }}">View</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>

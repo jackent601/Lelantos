@@ -8,13 +8,13 @@
 
             <div class="form-check form-switch">
                 {% if clustered %}
-                <a href="{% url 'analysis_by_device' %}" class="btn btn-primary">uncluster markers</a>
+                <a href="{% url 'ANALYSIS_BY_THIS_MODEL_URL_NAME' %}" class="btn btn-primary">uncluster markers</a>
                 {% else %}
-                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
+                <a href="{% url 'ANALYSIS_BY_THIS_MODEL_URL_NAME' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
                 {% endif %}
                 <a href="{% url 'analysis_home' %}" class="btn btn-primary">locations</a>
-                <a href="{% url 'analysis_by_creds' %}" class="btn btn-primary">Credentials</a>
-                <a href="{% url 'credentialNetwork' %}" class="btn btn-primary">Credential Network</a>
+                <a href="{% url 'ANALYSIS_BY_THIS_MODEL_URL_NAME' %}" class="btn btn-primary">ANALYSIS_BY_THIS_MODEL_BUTTON_LABEL</a>
+                <a href="{% url 'THIS_MODEL_NETWORK_URL_NAME' %}" class="btn btn-primary">ANALYSIS_BY_THIS_MODEL_BUTTON_LABEL Network</a>
                 <a href="{% url 'analysis_by_device' %}" class="btn btn-primary">Devices</a>
                 <a href="{% url 'deviceNetwork' %}" class="btn btn-primary">Device Network</a>
             </div>
@@ -23,7 +23,7 @@
 
             <!-- Map -->
             
-            <p>Locations where devices were seen</p>
+            <p>Locations where credentials were captured</p>
                 <div class="card" >
                     {{ map|safe }}
                 </div>
@@ -32,9 +32,8 @@
             
             <br>
             <!-- Credential Results -->
-            <p>All Devices</p>
-            <p><small>"mac_addr:type" assumed to be unique identifier however </small></p>
-            <p><small> WARNING: with rotating mac address security protocols this is not true hence this if POC only</small></p>
+            <p>All Credentials</p>
+            <p><small>{{ uniqueIdentifierFieldsHelpString }} assumed to uniquely identifier a ANALYSIS_BY_THIS_MODEL_BUTTON_LABEL</small></p>
             <div class="card" >
                 <table class="table table">
                     <thead>
@@ -46,14 +45,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for dev in uniqueModels %}
+                        {% for cred in uniqueModels %}
                             <tr>
-                                <!-- loop each key,val defining model -->
-                                {% for devKey, devValue in dev.modelDict.items %}
-                                    <td><a href="{% url 'analysis_by_specific_dev' %}?{{ devKey }}={{ devValue }}">{{ devValue }}</a></td>
-                                {% endfor %}
-                                <!-- add the overall filter -->
-                                <td><a href="{% url 'analysis_by_specific_dev' %}?{{ dev.modelTotalFilterReq }}">View</a></td>
+                                <td><a href="{% url 'ANALYSIS_BY_THIS_SPECIFIC_MODEL_URL_NAME' %}?username={{ cred.username }}">{{ cred.username }}</a></td>
+                                <td><a href="{% url 'ANALYSIS_BY_THIS_SPECIFIC_MODEL_URL_NAME' %}?password={{ cred.password }}">{{ cred.password }}</a></td>
+                                <td><a href="{% url 'ANALYSIS_BY_THIS_SPECIFIC_MODEL_URL_NAME' %}?type={{ cred.type }}&username={{ cred.username }}&password={{ cred.password }}">filter</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>

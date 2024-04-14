@@ -7,7 +7,7 @@ import portal_auth.utils as auth_utils
 from wp3_portal.settings import DEFAULT_LOCATION_SETTINGS 
 import folium
 from folium.plugins import MarkerCluster
-from wp3_basic.models import Session, Location, Credential_Result, Device_Instance
+from wp3_basic.models import Session, Location, Credential_Result, Device_Instance, Model_Result_Instance
 from osgeo import ogr, osr
 from wp3_portal.settings import folium_colours
 
@@ -49,7 +49,14 @@ def analysis_by_model_type(request, template, modelType):
         colour_idx=(colour_idx+1)%len(folium_colours)
     
     # Get unique models to display in table for filter
-    _, uniqueModels, uniqueFieldIdentifiers = mInstance.getAllModelsFromUserAndUniqueSet(active_session.user)
+    _, uniqueModelsDictsOnly, uniqueFieldIdentifiers = mInstance.getAllModelsFromUserAndUniqueSet(active_session.user)
+    
+    # Get the total filter for each model
+    uniqueModels=[]
+    if uniqueModelsDictsOnly is not None:
+        for modelDict in uniqueModelsDictsOnly:
+            totalFilterReq = "&".join([f"{key}={val}" for key, val in modelDict.items()])
+            uniqueModels.append({"modelDict":modelDict, "modelTotalFilterReq":totalFilterReq})
     
     return render(request, template, 
                   {'map': m._repr_html_(), 
@@ -87,7 +94,14 @@ def analysis_by_specific_model_instance(request, template, modelType):
         modelEntry.addThisInstanceToMap(mapAddObj, 0)
     
     # Get unique models to display in table for filter
-    _, uniqueModels, uniqueFieldIdentifiers = mInstance.getAllModelsFromUserAndUniqueSet(active_session.user)
+    _, uniqueModelsDictsOnly, uniqueFieldIdentifiers = mInstance.getAllModelsFromUserAndUniqueSet(active_session.user)
+    
+    # Get the total filter for each model
+    uniqueModels=[]
+    for modelDict in uniqueModelsDictsOnly:
+        totalFilterReq = "&".join([f"{key}={val}" for key, val in modelDict.items()])
+        print(totalFilterReq)
+        uniqueModels.append({"modelDict":modelDict, "modelTotalFilterReq":totalFilterReq})
     
     return render(request, 
                   template, 
@@ -98,8 +112,12 @@ def analysis_by_specific_model_instance(request, template, modelType):
                    'uniqueFieldIdentifiers': uniqueFieldIdentifiers,
                    'uniqueModels':uniqueModels})
 
+from django.apps import apps
 def analysis_home(request):
     """Displays all locations coloured by session for a user on a map"""
+    subclasses = Model_Result_Instance.get_subclasses()
+    Invoice = apps.get_model(app_label=subclasses[0]._meta.app_label, model_name=subclasses[0]._meta.model_name)
+    print(Invoice)
     return analysis_by_model_type(request, template="analysis/analysis.html", modelType=Location)
 
 def analysis_by_creds(request):
@@ -116,6 +134,7 @@ def analysis_by_dev(request):
 
 def analysis_by_specific_dev(request):
     """Displays all locations a specific device result is captured for a user on a map"""
+    # Get all model result subclasses
     return analysis_by_specific_model_instance(request, template="analysis/analysis_by_specific_dev.html", modelType=Device_Instance)  
     
 def modelNetwork(request, 
@@ -213,7 +232,7 @@ def deviceNetwork(request):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # Utils
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-
+# - - - - - - - - - - - - Map Utils - - - - - - - - - - - - - - - -
 def getMap(request):
     """Creates folium map to render with optional clustering based on request params"""
     m = folium.Map(location=[DEFAULT_LOCATION_SETTINGS['default_lat'], DEFAULT_LOCATION_SETTINGS['default_lon']], zoom_start=9)

@@ -8,9 +8,9 @@
 
             <div class="form-check form-switch">
                 {% if clustered %}
-                <a href="{% url 'analysis_by_device' %}" class="btn btn-primary">uncluster markers</a>
+                <a href="{% url 'analysis_by_specific_cred' %}?{{ reqParamString }}" class="btn btn-primary">uncluster markers</a>
                 {% else %}
-                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
+                <a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&{{ reqParamString }}" class="btn btn-primary">cluster markers</a>
                 {% endif %}
                 <a href="{% url 'analysis_home' %}" class="btn btn-primary">locations</a>
                 <a href="{% url 'analysis_by_creds' %}" class="btn btn-primary">Credentials</a>
@@ -23,7 +23,7 @@
 
             <!-- Map -->
             
-            <p>Locations where devices were seen</p>
+            <p>{{ displayMsg }}</p>
                 <div class="card" >
                     {{ map|safe }}
                 </div>
@@ -32,9 +32,8 @@
             
             <br>
             <!-- Credential Results -->
-            <p>All Devices</p>
-            <p><small>"mac_addr:type" assumed to be unique identifier however </small></p>
-            <p><small> WARNING: with rotating mac address security protocols this is not true hence this if POC only</small></p>
+            <p>All Credentials</p>
+            <p><small>"type:username:password" assumed to uniquely identifier a credential</small></p>
             <div class="card" >
                 <table class="table table">
                     <thead>

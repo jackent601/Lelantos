@@ -45,11 +45,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for cred in uniqueModels %}
+                        {% for dev in uniqueModels %}
                             <tr>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?username={{ cred.username }}">{{ cred.username }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?password={{ cred.password }}">{{ cred.password }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?type={{ cred.type }}&username={{ cred.username }}&password={{ cred.password }}">filter</a></td>
+                                <!-- loop each key,val defining model -->
+                                {% for devKey, devValue in dev.modelDict.items %}
+                                    <td><a href="{% url 'analysis_by_specific_cred' %}?{{ devKey }}={{ devValue }}">{{ devValue }}</a></td>
+                                {% endfor %}
+                                <!-- add the overall filter -->
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?{{ dev.modelTotalFilterReq }}">View</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>
