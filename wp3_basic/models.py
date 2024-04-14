@@ -90,13 +90,20 @@ class Location(gisModels.Model):
             icon=folium.Icon(color=folium_colours[colour_idx], icon='user', prefix=prefix)
         ).add_to(mapAddObj)
         
+    # Some functions to satisfy the model-result interface allowing convenient function re-use in template rendering
+    @classmethod
     def addModelsAtLocToMap(self, mapAddObj, loc, colour_idx):
         """To satisfy analysis interface for convenient plotting integration"""
         loc.addLocToMap(mapAddObj, colour_idx)
     
+    @classmethod
     def getAllModelsFromUserAndUniqueSet(self, user):
         """To satisfy analysis interface for convenient plotting integration"""
         return None, None, None
+    
+    @classmethod
+    def getModelUniqueIdentifierPatternString(self):
+        return ""
 
 """
     Allows tracking of arbitrary linux processes for modules
@@ -141,6 +148,10 @@ class Model_Result_Instance(models.Model):
                 if (model is not None and
                     issubclass(model, cls) and
                     model is not cls)]
+    
+    @classmethod
+    def getModelUniqueIdentifierPatternString(self):
+        return ":".join(self.uniqueIdentifiers)
         
     # Methods for analysis = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # - - - - - - - - - - - - - - - - Plotting Models on Map - - - - - - - - - - - - - - - - - - - - -
@@ -149,12 +160,14 @@ class Model_Result_Instance(models.Model):
     # 'unique' sets i.e. nodes (location-agnostic) in order to connect 'uniqie' entries based on location
     # these functions identify 'nodes' based on models uniqueIdentifiers  
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    @classmethod
     def addModelsAtLocToMap(self, mapAddObj, loc, colour_idx):
         """
         For a location adds any model instances captured here to map with colour index from foliums allowed colors
         """
         modelsString=""
-        for model in self.__class__.objects.filter(module_session_captured__location=loc):
+        # for model in self.__class__.objects.filter(module_session_captured__location=loc):
+        for model in self.objects.filter(module_session_captured__location=loc):
             modelsString += f"{model.getMsgFromModel()}\n"
         # Add marker if not nil
         if modelsString != "":
@@ -173,6 +186,7 @@ class Model_Result_Instance(models.Model):
         """Message to display on pop-up at a location, can be overwritten, defaults to nodes value"""
         return f"({self.getNodeString()})"
     
+    @classmethod
     def getAllModelsFromUserAndUniqueSet(self, user):
         """
         User to pass in context to template parsing
@@ -180,11 +194,13 @@ class Model_Result_Instance(models.Model):
             Finds unique set within these models on uniqueIdentifiers
             reutnrs QuerySet, UniqueModelDicts
         """
-        allCredInstances = self.__class__.objects.filter(module_session_captured__session__user=user)
+        # allCredInstances = self.__class__.objects.filter(module_session_captured__session__user=user)
+        allCredInstances = self.objects.filter(module_session_captured__session__user=user)
         # get unique set
         uniqueCreds = allCredInstances.values(*self.uniqueIdentifiers).distinct()
         return allCredInstances, uniqueCreds, self.uniqueIdentifiers
     
+    @classmethod    
     def unpackSpecificModelRequest(self, request):
         "Unpacks parameters to vdisplay a specific model instance on map"
         paramDict={}
@@ -203,7 +219,8 @@ class Model_Result_Instance(models.Model):
         if len(paramDictCleaned) == 0:
             None, f"invalid cred parameters, none of {self.uniqueIdentifiers} specified"
         return paramDictCleaned, None 
-    
+        
+    @classmethod 
     def parseSpecificModelParamRequest(self, user, paramDict):
         """
         Uses params dictionary to filter model results for desired hits
@@ -213,7 +230,7 @@ class Model_Result_Instance(models.Model):
         # get all credential entrys for this result based on parameters
         reqParams=[]
         messageBase=f"{self._meta.model_name} locations for:"
-        filterQuerySet = self.__class__.objects.filter(module_session_captured__session__user=user)
+        filterQuerySet = self.objects.filter(module_session_captured__session__user=user)
         results=filterQuerySet.filter(**paramDict)
         
         # Get request url params for template
@@ -244,7 +261,7 @@ class Model_Result_Instance(models.Model):
         node string will <uniqueID1Value>:<uniqueID2Value>:...
         """
         return self.getNodeIdentifierFromDict(self.__dict__)
-    
+
     def getModelDictFromNodeString(self, nodeString):
         """Gets device dictionary from node identifier"""
         uniqueIdValues=nodeString.split(":")
@@ -252,13 +269,13 @@ class Model_Result_Instance(models.Model):
         for uniqueID, uniqueIDValue in zip(self.uniqueIdentifiers, uniqueIdValues):
             modelDict[uniqueID]=uniqueIDValue
         return modelDict
-        # return {"mac_addr":elements[0], "type":elements[1]}
     
     # Generating Network Elements (nodes and edges) - - - - - - - - - - - - - - - - - - - - - - - - -
     # With the ability to identify unique 'nodes' from the above functions, this functions
     # gather all nodes (based on speific model type), and edges (where multiple nodes present at
     # the same location) to be displayed on a network graph
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    @classmethod
     def getNodesFromUser(self, user):
         """
         Gets all unique nodes for model type using uniqueIdentifiers defined for the model
@@ -268,7 +285,8 @@ class Model_Result_Instance(models.Model):
         # add node for each unique set
         nodes=[self.getNodeIdentifierFromDict(dict) for dict in uniqueSets]
         return nodes
-
+    
+    @classmethod
     def getNodeEdgesByLocationFromUser(self, user):
         """
         Gets all edges (co-located model entries) for a user (using double looping with moving index for each location)

@@ -1,0 +1,35 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+    {% if user.is_authenticated %}
+        <div>
+
+            <h5>Analysis<h5>
+
+            <div class="form-check form-switch">
+                <!-- Optional clustering -->
+                {% if clustered %}
+                <a href="?{{ modelParamReq }}" class="btn btn-primary">uncluster markers</a>
+                {% else %}
+                <a href="?clusterMarkers&{{ modelParamReq }}" class="btn btn-primary">cluster markers</a>
+                {% endif %}
+
+                <!-- Locations (Home) -->
+                <a href="{% url 'analysis_home' %}" class="btn btn-primary">locations</a>
+
+                <!-- Model Results Nav Buttons -->
+                {% for modelResultOption in modelResultOptions %}
+                <a href="{% url 'analysis_by_model' %}?app_label={{ modelResultOption.app_label }}&model_name={{ modelResultOption.model_name }}" class="btn btn-primary">{{ modelResultOption.model_name }}s</a>
+                {% endfor %}
+
+            </div>
+
+            <br>
+
+            <!-- Template Content -->
+            {% block resultDetails %}
+            {% endblock %}
+            
+        </div>
+    {% endif %}
+{% endblock %}

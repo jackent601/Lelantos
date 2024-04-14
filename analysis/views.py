@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.apps import apps
 
 import portal_auth.utils as auth_utils  
 
@@ -8,7 +9,6 @@ from wp3_portal.settings import DEFAULT_LOCATION_SETTINGS
 import folium
 from folium.plugins import MarkerCluster
 from wp3_basic.models import Session, Location, Credential_Result, Device_Instance, Model_Result_Instance
-from osgeo import ogr, osr
 from wp3_portal.settings import folium_colours
 
 # Network Graphs
@@ -20,10 +20,20 @@ import plotly
 # URLS
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-def analysis_by_model_type(request, template, modelType):
+# - - - - - - - - - - - - - - MAPS - - - - - - - - - - - - - - - - - -
+# Base Wrapper For Mapping Results (or Locations as a specific case)
+def analysis_by_model_results(request, 
+                              specificResult=False,
+                              template="analysis/analysis_by_model_results.html"):
     """
+    Reuseable function for all base models (results and locations)
+    
     Displays all model instances of specified type captured, by location, coloured by session for a user on a map
-    Provides unique Models as context for template rendering
+    Parameters used to find model type in order to rendered required data
+    As all model results inherit from the same class any model created as a subclass of Model_Result_Instance can
+    automatically be rendered in this manner
+    
+    Locations only is a special case of this function rendering with a template override
     """
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
@@ -33,110 +43,108 @@ def analysis_by_model_type(request, template, modelType):
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
+    # unpack model params to get specific model
+    app_label = request.GET.get('app_label', None)
+    model_name = request.GET.get('model_name', None)
+    if app_label is None or model_name is None:
+        message=messages.error(request, "app_label and model_name must be provided parameters to view model_results")
+        return redirect('analysis_home') 
+    pageParamReq=f"app_label={app_label}&model_name={model_name}"       
+    
     # get instance to access methods
-    mInstance = modelType()
+    modelType = apps.get_model(app_label=app_label, model_name=model_name)
     
     # Get Map
     m, mapAddObj, clustered = getMap(request)
     
-    # Plot Markers that have credential results
-    colour_idx = 0
-    for sesh in Session.objects.filter(user=active_session.user):
-        # Get all locations for each session
-        for loc in Location.objects.filter(session=sesh):
-            mInstance.addModelsAtLocToMap(mapAddObj, loc, colour_idx)
-        # increment color to color by session
-        colour_idx=(colour_idx+1)%len(folium_colours)
+    # Switch on whether mapping specific result, or all results
+    if specificResult:
+            # unpack specific model request & validate
+        paramsReqDict, errMsg = modelType.unpackSpecificModelRequest(request)
+        if errMsg is not None:
+            message=messages.error(request, errMsg)
+            return redirect('analysis_home')  
+
+        # Use request params to parse QuerySet, display message, and request string
+        filterQuerySet, displayMsg, reqParamString = modelType.parseSpecificModelParamRequest(active_session.user, paramsReqDict)
+        pageParamReq+=f"&{reqParamString}"
+        
+        map_title=displayMsg
+        
+        # Add location for each instance
+        for modelEntry in filterQuerySet:
+            modelEntry.addThisInstanceToMap(mapAddObj, 0)
+    else:
+        # Plot Markers that have model results
+        colour_idx = 0
+        map_title=f"Locations where {model_name}s were captured"
+        for sesh in Session.objects.filter(user=active_session.user):
+            # Get all locations for each session
+            for loc in Location.objects.filter(session=sesh):
+                modelType.addModelsAtLocToMap(mapAddObj, loc, colour_idx)
+            # increment color to color by session
+            colour_idx=(colour_idx+1)%len(folium_colours)
     
     # Get unique models to display in table for filter
-    _, uniqueModelsDictsOnly, uniqueFieldIdentifiers = mInstance.getAllModelsFromUserAndUniqueSet(active_session.user)
+    _, uniqueModelsDictsOnly, uniqueFieldIdentifiers = modelType.getAllModelsFromUserAndUniqueSet(active_session.user)
     
-    # Get the total filter for each model
+    # Get the total filter for each model to populate results table
     uniqueModels=[]
     if uniqueModelsDictsOnly is not None:
         for modelDict in uniqueModelsDictsOnly:
             totalFilterReq = "&".join([f"{key}={val}" for key, val in modelDict.items()])
             uniqueModels.append({"modelDict":modelDict, "modelTotalFilterReq":totalFilterReq})
-    
-    return render(request, template, 
-                  {'map': m._repr_html_(), 
-                   'clustered':clustered, 
-                   'uniqueFieldIdentifiers': uniqueFieldIdentifiers,
-                   'uniqueModels':uniqueModels})
-
-def analysis_by_specific_model_instance(request, template, modelType):
-    """Displays all locations a specific model result is captured for a user on a map"""
-    # Auth
-    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
-    if _error:
-        return _redirect
-    if active_session is None:
-        message=messages.error(request, "No active session for user, log out and in again to create a session")
-        return redirect('home')
-    
-    # get instance to access methods
-    mInstance = modelType()
-    
-    # Get Map
-    m, mapAddObj, clustered = getMap(request)
-        
-    # unpack specific model request & validate
-    paramsReqDict, errMsg = mInstance.unpackSpecificModelRequest(request)
-    if errMsg is not None:
-        message=messages.error(request, errMsg)
-        return redirect('analysis_home')  
-
-    # Use request params to parse QuerySet, display message, and request string
-    filterQuerySet, displayMsg, reqParamString = mInstance.parseSpecificModelParamRequest(active_session.user, paramsReqDict)
-    
-    # Add location for each instance
-    for modelEntry in filterQuerySet:
-        modelEntry.addThisInstanceToMap(mapAddObj, 0)
-    
-    # Get unique models to display in table for filter
-    _, uniqueModelsDictsOnly, uniqueFieldIdentifiers = mInstance.getAllModelsFromUserAndUniqueSet(active_session.user)
-    
-    # Get the total filter for each model
-    uniqueModels=[]
-    for modelDict in uniqueModelsDictsOnly:
-        totalFilterReq = "&".join([f"{key}={val}" for key, val in modelDict.items()])
-        print(totalFilterReq)
-        uniqueModels.append({"modelDict":modelDict, "modelTotalFilterReq":totalFilterReq})
-    
-    return render(request, 
-                  template, 
-                  {'map': m._repr_html_(), 
-                   'clustered':clustered,
-                   'reqParamString':reqParamString, 
-                   'displayMsg':displayMsg, 
-                   'uniqueFieldIdentifiers': uniqueFieldIdentifiers,
-                   'uniqueModels':uniqueModels})
-
-from django.apps import apps
-def analysis_home(request):
-    """Displays all locations coloured by session for a user on a map"""
+            
+    # Get subclasses available for detailed analysis to autogenerate buttons
     subclasses = Model_Result_Instance.get_subclasses()
-    Invoice = apps.get_model(app_label=subclasses[0]._meta.app_label, model_name=subclasses[0]._meta.model_name)
-    print(Invoice)
-    return analysis_by_model_type(request, template="analysis/analysis.html", modelType=Location)
-
-def analysis_by_creds(request):
-    """Displays all credentials captured at a location, coloured by session for a user on a map"""
-    return analysis_by_model_type(request, template="analysis/analysis_by_creds.html", modelType=Credential_Result)
-
-def analysis_by_specific_cred(request):
-    """Displays all locations a specific credential result is captured for a user on a map"""
-    return analysis_by_specific_model_instance(request, template="analysis/analysis_by_specific_creds.html", modelType=Credential_Result)
+    subclassesNames=[{
+        'model_name':subclass._meta.model_name,
+        'app_label':subclass._meta.app_label} 
+                     for subclass in subclasses]
     
-def analysis_by_dev(request):
-    """Displays all devices captured at a location, coloured by session for a user on a map"""
-    return analysis_by_model_type(request, template="analysis/analysis_by_devices.html", modelType=Device_Instance)
-
-def analysis_by_specific_dev(request):
-    """Displays all locations a specific device result is captured for a user on a map"""
-    # Get all model result subclasses
-    return analysis_by_specific_model_instance(request, template="analysis/analysis_by_specific_dev.html", modelType=Device_Instance)  
+    # title map
+    results_title=f"All {model_name}s"
     
+    # render this model type
+    return render(request, template, 
+                  {'map': m._repr_html_(),
+                   'map_title':map_title,
+                   # For clustering switch 
+                   'clustered':clustered, 
+                   'modelParamReq':pageParamReq,
+                   # For Nav Button Generation
+                   'modelResultOptions':subclassesNames,
+                   # For display
+                   'model_name': model_name,
+                   'uniqueIdentifierPattern':modelType.getModelUniqueIdentifierPatternString(),
+                   # For Table of Results
+                   'results_title':results_title,
+                   'uniqueFieldIdentifiers': uniqueFieldIdentifiers,
+                   'uniqueModels':uniqueModels})
+
+# Individual URLs to handle wrapper
+def analysis_home(request):
+    """
+    Displays all locations coloured by session for a user on a map
+    location implements the required interface so can be rendered as a 'model result' in itself
+    so set the request parameters and render with a template override
+    """
+    request.GET._mutable = True
+    request.GET['app_label']=Location._meta.app_label
+    request.GET['model_name']=Location._meta.model_name
+    return analysis_by_model_results(request, template="analysis/analysis.html")
+    # return analysis_by_model_type(request, template="analysis/analysis.html", modelType=Location)
+
+def analysis_of_all_a_model_results(request):
+    """Displays all results relating to a model type (type found by request parameters)""" 
+    return analysis_by_model_results(request)
+
+def analysis_of_a_specific_model_result(request):
+    """Displays all results relating to a specific model instance (instance found by request parameters)""" 
+    return analysis_by_model_results(request, specificResult=True)
+     
+# - - - - - - - - - - - Network Graphs (from co-locations) - - - - - - - - - - - - - - - - - -
+# Base Wrapper For Networking Results
 def modelNetwork(request, 
                  modelType,
                  template, 
