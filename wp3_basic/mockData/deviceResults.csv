@@ -1,13 +1,16 @@
-moduleSessionNum,deviceNum,mac_addr,ip,private_ip,type,first_seen,comments,
-1,1,CC-DF-12-E0-82-AC,192.45.56.112,192.168.0.171,unknown,,,
-2,2,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations,
-3,3,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations,
-4,4,C2-EE-45-54-84-44,172.12.14.127,,SamsungGalaxy,,has associated single credential,
-4,5,AE-EA-12-21-21-AA,192.111.55.111,,Nokiabrick,,has associated credential 2 across multiple locations,
-5,6,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations,
-6,7,AE-EA-12-21-21-AA,192.111.55.111,,Nokiabrick,,has associated credential 2 across multiple locations,
-6,8,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations,
-7,9,B2-DD-55-50-82-AC,192.101.55.132,,Pixel3,,has associated single credential,
-8,10,AE-EA-12-21-21-AA,192.111.55.111,,Nokiabrick,,"has associated credential 2 across multiple locations, different capture technique",
-9,11,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations,
-9,12,AA-BB-CC-55-82-DD,192.123.55.123,,CupAndString,,has associated single credential,
+moduleSessionNum,deviceNum,mac_addr,ip,private_ip,type,first_seen,comments
+1,1,CC-DF-12-E0-82-AC,192.45.56.112,192.168.0.171,unknown,,
+2,2,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations
+3,3,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations
+4,4,C2-EE-45-54-84-44,172.12.14.127,,SamsungGalaxy,,has associated single credential
+4,5,AE-EA-12-21-21-AA,192.111.55.111,,Nokiabrick,,has associated credential 2 across multiple locations
+5,6,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations
+6,7,AE-EA-12-21-21-AA,192.111.55.111,,Nokiabrick,,has associated credential 2 across multiple locations
+6,8,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations
+7,9,B2-DD-55-50-82-AC,192.101.55.132,,CupAndString,,has associated single credential
+8,10,AE-EA-12-21-21-AA,192.111.55.111,,Nokiabrick,,"has associated credential 2 across multiple locations, different capture technique"
+9,11,B2-DD-55-50-82-AC,192.101.55.132,,iPhone9,,has associated credential 1 across multiple locations
+9,12,AA-BB-CC-55-82-DD,192.123.55.123,,Pixel3,,has associated single credential
+6,13,BA-AB-CC-55-44-22,192.123.12.125,,Pixel3,,device association with no credentials
+9,14,BA-AB-CC-55-44-22,192.123.12.125,,Pixel3,,device association with no credentials
+9,15,12-34-56-AD-EE-DA,111.222.333.444,,Bowman,,device association with no credentials

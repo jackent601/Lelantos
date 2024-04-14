@@ -1,0 +1,22 @@
+#!/bin/bash
+# move old database
+mv dbWithGeo.sqlite3 dbWithGeo.sqlite3.old
+
+# move old migrations
+mkdir -p aircrack_ng_broker/migrations/_archive
+mv aircrack_ng_broker/migrations/0*.py aircrack_ng_broker/migrations/_archive
+
+mkdir -p wifiphisher_broker/migrations/_archive
+mv wifiphisher_broker/migrations/0*.py wifiphisher_broker/migrations/_archive
+
+mkdir -p wp3_basic/migrations/_archive
+mv wp3_basic/migrations/0*.py wp3_basic/migrations/_archive
+
+# make new migrations
+python3 manage.py makemigrations
+# prep for spatialite
+python3 manage.py shell -c "import django;django.db.connection.cursor().execute('SELECT InitSpatialMetaData(1);')";
+# migrate
+python3 manage.py migrate
+# mock data
+python3 manage.py createMockData

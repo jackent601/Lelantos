@@ -12,10 +12,10 @@
                 {% else %}
                 <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
                 {% endif %}
-                <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">locations</a>
-                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">Credentials</a>
+                <a href="{% url 'analysis_home' %}" class="btn btn-primary">locations</a>
+                <a href="{% url 'analysis_by_creds' %}" class="btn btn-primary">Credentials</a>
                 <a href="{% url 'credentialNetwork' %}" class="btn btn-primary">Credential Network</a>
-                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">Devices</a>
+                <a href="{% url 'analysis_by_device' %}" class="btn btn-primary">Devices</a>
                 <a href="{% url 'deviceNetwork' %}" class="btn btn-primary">Device Network</a>
             </div>
 
@@ -38,21 +38,18 @@
                 <table class="table table">
                     <thead>
                         <tr>
-                        <th scope="col">Type</th>
-                        <th scope="col">Username</th>
-                        <th scope="col">Password</th>
-                        <th scope="col">Username:Password</th>
-                        <th scope="col">FilterOnAll</th>
+                        {% for id in uniqueFieldIdentifiers %}
+                        <th scope="col">{{ id }}</th>
+                        {% endfor %}
+                        <th scope="col">View</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for cred in uniqueCreds %}
+                        {% for cred in uniqueModels %}
                             <tr>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&type={{ cred.type }}">{{ cred.type }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&username={{ cred.username }}">{{ cred.username }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&password={{ cred.password }}">{{ cred.password }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&username={{ cred.username }}&password={{ cred.password }}">filter</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&type={{ cred.type }}&username={{ cred.username }}&password={{ cred.password }}">filter</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?username={{ cred.username }}">{{ cred.username }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?password={{ cred.password }}">{{ cred.password }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_cred' %}?type={{ cred.type }}&username={{ cred.username }}&password={{ cred.password }}">filter</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>

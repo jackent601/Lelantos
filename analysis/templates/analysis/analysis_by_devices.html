@@ -8,14 +8,14 @@
 
             <div class="form-check form-switch">
                 {% if clustered %}
-                <a href="{% url 'analysis_by_creds' %}" class="btn btn-primary">uncluster markers</a>
+                <a href="{% url 'analysis_by_device' %}" class="btn btn-primary">uncluster markers</a>
                 {% else %}
-                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
+                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
                 {% endif %}
-                <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">locations</a>
-                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">Credentials</a>
+                <a href="{% url 'analysis_home' %}" class="btn btn-primary">locations</a>
+                <a href="{% url 'analysis_by_creds' %}" class="btn btn-primary">Credentials</a>
                 <a href="{% url 'credentialNetwork' %}" class="btn btn-primary">Credential Network</a>
-                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">Devices</a>
+                <a href="{% url 'analysis_by_device' %}" class="btn btn-primary">Devices</a>
                 <a href="{% url 'deviceNetwork' %}" class="btn btn-primary">Device Network</a>
             </div>
 
@@ -39,17 +39,18 @@
                 <table class="table table">
                     <thead>
                         <tr>
-                        <th scope="col">MAC Address</th>
-                        <th scope="col">Type</th>
+                        {% for id in uniqueFieldIdentifiers %}
+                        <th scope="col">{{ id }}</th>
+                        {% endfor %}
                         <th scope="col">View</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for dev in devices %}
+                        {% for dev in uniqueModels %}
                             <tr>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&mac_addr={{ dev.mac_addr }}">{{ dev.mac_addr }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&type={{ dev.type }}">{{ dev.type }}</a></td>
-                                <td><a href="{% url 'analysis_by_specific_cred' %}?clusterMarkers&mac_addr={{ dev.mac_addr }}&type={{ dev.type }}">View</a></td>
+                                <td><a href="{% url 'analysis_by_specific_dev' %}?mac_addr={{ dev.mac_addr }}">{{ dev.mac_addr }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_dev' %}?type={{ dev.type }}">{{ dev.type }}</a></td>
+                                <td><a href="{% url 'analysis_by_specific_dev' %}?mac_addr={{ dev.mac_addr }}&type={{ dev.type }}">View</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>

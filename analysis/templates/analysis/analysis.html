@@ -12,10 +12,10 @@
                 {% else %}
                 <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">cluster markers</a>
                 {% endif %}
-                <a href="{% url 'analysis_home' %}?clusterMarkers" class="btn btn-primary">locations</a>
-                <a href="{% url 'analysis_by_creds' %}?clusterMarkers" class="btn btn-primary">Credentials</a>
+                <a href="{% url 'analysis_home' %}" class="btn btn-primary">locations</a>
+                <a href="{% url 'analysis_by_creds' %}" class="btn btn-primary">Credentials</a>
                 <a href="{% url 'credentialNetwork' %}" class="btn btn-primary">Credential Network</a>
-                <a href="{% url 'analysis_by_device' %}?clusterMarkers" class="btn btn-primary">Devices</a>
+                <a href="{% url 'analysis_by_device' %}" class="btn btn-primary">Devices</a>
                 <a href="{% url 'deviceNetwork' %}" class="btn btn-primary">Device Network</a>
             </div>
 
@@ -24,11 +24,6 @@
 
                 {{ map|safe }}
             
-            <div>
-                <button class="btn btn-primary" type="submit">
-                    Button
-                </button>
-            </div>
         </div>
     {% endif %}
 {% endblock %}

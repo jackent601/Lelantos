@@ -137,11 +137,11 @@ def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive
         return False, None
                 
 # Not currently needed as base classes are populated (by design) but useful if extending module in future
-class Wifiphisher_Credential_Result(models.Model):
-    wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
-    credential=models.ForeignKey(Credential_Result, on_delete=models.CASCADE)
+# class Wifiphisher_Credential_Result(models.Model):
+#     wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
+#     credential=models.ForeignKey(Credential_Result, on_delete=models.CASCADE)
     
-class Wifiphisher_Device_Instance(models.Model):
-    wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
-    device_instance=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
+# class Wifiphisher_Device_Instance(models.Model):
+#     wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
+#     device_instance=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
 

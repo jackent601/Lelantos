@@ -138,6 +138,28 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE=True
 
 # Default location settings (default N.I belfast area)
 DEFAULT_LOCATION_SETTINGS = {'default_lat': 54.5966, 'default_lon': -5.9301}
+CONVERT_COORDS_FOR_MAP=True
+
+# can be generated with folium_colours=list(folium.Icon.color_options) but this ordering is prettier
+folium_colours = ["red", 
+                  "blue",
+                  "green",
+                  "purple",
+                  "orange",
+                  "darkred",
+                  "lightred",
+                  "beige",
+                  "darkblue",
+                  "darkgreen",
+                  "cadetblue",
+                  "darkpurple",
+                  "white",
+                  "pink",
+                  "lightblue",
+                  "lightgreen",
+                  "gray",
+                  "black",
+                  "lightgray"]
 
 # aircrack settings - TODO - move to urls pattern
 from aircrack_ng_broker.aircrack_ng_config import *
