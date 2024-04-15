@@ -12,6 +12,36 @@
 {% endblock %}
 
 {% block analysisFootDisplay %}            
+<p>View Connection</p>
+<div>
+
+<form method="POST" action="{% url 'analysis_by_specific_model_result' %}?{{ modelParamReq }}">
+    {% csrf_token %}
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="interface">Node 1</label>
+        </div>
+        <select class="custom-select" id="node1" name="node1">
+            {% for node in allNodes %}
+                <option value="{{ node }}">{{ node }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="interface">Node 2</label>
+        </div>
+        <select class="custom-select" id="node2" name="node2">
+            {% for node in allNodes %}
+                <option value="{{ node }}">{{ node }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">View Co-locations</button>
+</form>
+
+<br>
+
 <!-- Results Table -->
 <p>{{ model_name }}(s) with no connections</p>
 <div class="card" >

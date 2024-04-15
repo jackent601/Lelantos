@@ -152,7 +152,7 @@ class Model_Result_Instance(models.Model):
     
     @classmethod
     def getModelUniqueIdentifierPatternString(self):
-        return ":".join(self.uniqueIdentifiers)
+        return "__".join(self.uniqueIdentifiers)
         
     # Methods for analysis = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # - - - - - - - - - - - - - - - - Plotting Models on Map - - - - - - - - - - - - - - - - - - - - -
@@ -255,7 +255,7 @@ class Model_Result_Instance(models.Model):
         node string will <uniqueID1Value>:<uniqueID2Value>:...
         """
         uniqueElems=[instanceDict[uniqueID] for uniqueID in self.uniqueIdentifiers]
-        return ":".join(uniqueElems)
+        return "__".join(uniqueElems)
     
     def getNodeString(self):
         """
@@ -267,7 +267,7 @@ class Model_Result_Instance(models.Model):
     @classmethod 
     def getModelDictFromNodeString(self, nodeString):
         """Gets device dictionary from node identifier"""
-        uniqueIdValues=nodeString.split(":")
+        uniqueIdValues=nodeString.split("__")
         modelDict={}
         for uniqueID, uniqueIDValue in zip(self.uniqueIdentifiers, uniqueIdValues):
             modelDict[uniqueID]=uniqueIDValue

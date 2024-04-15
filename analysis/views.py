@@ -92,20 +92,46 @@ def analysis_by_model_results(request,
     
     # Switch on whether mapping specific result, or all results
     if specificResult:
-        # unpack specific model request & validate
-        paramsReqDict, errMsg = modelType.unpackSpecificModelRequest(request)
-        if errMsg is not None:
-            message=messages.error(request, errMsg)
-            return redirect('analysis_home')  
+        # Switch on whether GET (view result instance) or POST (view where two nodes co-located)
+        if request.method=="GET":
+            # unpack specific model request & validate
+            paramsReqDict, errMsg = modelType.unpackSpecificModelRequest(request)
+            if errMsg is not None:
+                message=messages.error(request, errMsg)
+                return redirect('analysis_home')  
 
-        # Use request params to parse QuerySet, display message, and request string
-        filterQuerySet, displayMsg, reqParamString = modelType.parseSpecificModelParamRequest(active_session.user, paramsReqDict)
-        displayContext['modelParamReq']+=f"&{reqParamString}"
-        displayContext['map_title']=displayMsg
-        
-        # Add location for each instance
-        for modelEntry in filterQuerySet:
-            modelEntry.addThisInstanceToMap(mapAddObj, 0)
+            # Use request params to parse QuerySet, display message, and request string
+            filterQuerySet, displayMsg, reqParamString = modelType.parseSpecificModelParamRequest(active_session.user, paramsReqDict)
+            displayContext['modelParamReq']+=f"&{reqParamString}"
+            displayContext['map_title']=displayMsg
+            
+            # Add location for each instance
+            for modelEntry in filterQuerySet:
+                modelEntry.addThisInstanceToMap(mapAddObj, 0)
+        else:
+            pS = request.POST
+            # Get all locations of node1
+            node1 = request.POST.get('node1', None)
+            node1Dict = modelType.getModelDictFromNodeString(node1)
+            node1Instances = modelType.objects.filter(**node1Dict)
+            node1Locations = [n1Instance.module_session_captured.location for n1Instance in node1Instances]
+            
+            node2 = request.POST.get('node2', None)
+            node2Dict = modelType.getModelDictFromNodeString(node2)
+            node2Instances = modelType.objects.filter(**node2Dict)
+            
+            # colocated instances
+            coLocations=[]
+            for n2Instance in node2Instances:
+                if n2Instance.module_session_captured.location in node1Locations:
+                    coLocations.append(n2Instance.module_session_captured.location)
+                    
+            # add to map
+            for loc in coLocations:
+                modelType.addModelsAtLocToMap(mapAddObj, loc, 0)
+                
+            displayContext['map_title']=f"Co-locations of '{node1}' and '{node2}'"
+            displayContext['disableClustering']='disabled'     
     else:
         # Plot Markers that have model results
         colour_idx = 0
@@ -194,6 +220,7 @@ def model_network(request,
     # Nodes (credentials) - - - - - - - - - - - - - - - 
     # m = modelType() # get instance to access methods
     nodes=modelType.getNodesFromUser(user=active_session.user)
+    displayContext['allNodes']=nodes
 
     # Edges (credential co-located)  - - - - - - - - -
     edges, nodesWithEdges = modelType.getNodeEdgesByLocationFromUser(user=active_session.user)
