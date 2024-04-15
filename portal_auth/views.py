@@ -2,13 +2,14 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.contrib.auth import authenticate, login, logout 
 from django.contrib import messages
-from wp3_basic.models import Session, get_new_valid_session_id, Module_Session
+from wp3_basic.models import Session, Module_Session
 from django.utils import timezone
-from django.contrib.auth.models import User
+
+from wp3_basic.management.commands.createMockData import MOCK_DATA_USERNAME
 
 import portal_auth.utils as auth_utils
 
-# from wp3_broker.utils import wp3_api_running
+
 
 def login_user(request: HttpRequest):
     # Catch first visit
@@ -29,14 +30,10 @@ def login_user(request: HttpRequest):
     new_session = auth_utils.start_new_session_for_user(request, _user)
     started_at=new_session.start_time.strftime("%m/%d/%Y - %H:%M:%S")
     
-    # TODO - logging!!
-    # message=messages.success(request, f"logged in, session id: {new_session.session_id}, started: {started_at}") 
-    # # Check Server
-    # if wp3_api_running():
-    #     message=messages.warning(request, "wp3 server already running") 
-    # else:
-    #     message=messages.success(request, "wp3 server ready to start")
     message=messages.success(request, "login succesful, please set session location")
+    
+    if _user.username==MOCK_DATA_USERNAME:
+        return redirect('home')
     return redirect('setLocation')
 
 

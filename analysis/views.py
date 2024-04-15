@@ -47,6 +47,7 @@ def getContextFromRequestAndValidate(request):
     # Get model type from params
     modelType = apps.get_model(app_label=displayContext['app_label'], model_name=displayContext['model_name'])
     displayContext['uniqueIdentifierPattern']=modelType.getModelUniqueIdentifierPatternString()
+    displayContext['uniqueFieldIdentifiers']=modelType.uniqueIdentifiers
     
     # Get subclasses available for detailed analysis to autogenerate buttons
     subclasses = Model_Result_Instance.get_subclasses()

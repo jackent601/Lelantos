@@ -8,3 +8,6 @@ moduleSessionNum,locationNum,module_name,start_time,end_time,active,pid,interfac
 7,12,wifiphisher_captive_portal,,,,,wlan2,oauth-login,freeWifi,,,,user-credentials
 8,28,wifiphisher_captive_portal,,,,,wlan2,oauth-login,freeWifi,,,,user-credentials
 9,17,wifiphisher_captive_portal,,,,,wlan2,wifi_connect,homePlaceWifi,,,,user-credentials
+10,6,demo_IMSI,,,,,,,,,,,
+11,7,demo_IMSI,,,,,,,,,,,
+12,9,demo_IMSI,,,,,,,,,,,

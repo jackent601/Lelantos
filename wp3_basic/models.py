@@ -47,6 +47,7 @@ class Location(gisModels.Model):
     area = gisModels.CharField(max_length=100)
     remarks = gisModels.CharField(max_length=1000)
     convert_coords_for_map=CONVERT_COORDS_FOR_MAP # see convert_3857_to_4326
+    uniqueIdentifiers=() # to conform with analysis functions
     
     def convert_3857_to_4326 (self, coords_3857):
         """
@@ -335,8 +336,6 @@ class Device_Instance(Model_Result_Instance):
     # are the model's unique identifiers which determine 'nodes'
     uniqueIdentifiers=('mac_addr', 'type')
 
-# to be moved into 'basic'
-# TODO - review ng in the manner
 class Credential_Result(Model_Result_Instance):
     # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
     device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
@@ -349,6 +348,12 @@ class Credential_Result(Model_Result_Instance):
     # All that needs defined to use the inherited netowrk plotting functions
     # are the model's unique identifiers which determine 'nodes'
     uniqueIdentifiers=('username', 'password')
+
+# Uncomment to demo IMSI capturing mock data
+class Demo_IMSI_Result(Model_Result_Instance):
+    imsi=models.CharField(max_length=200)
+    uniqueIdentifiers=('imsi',)
+
 
 # // Deprecated - useful if wifipumpkin improve kali distro
 class Wp3_Authentication_Token(models.Model):

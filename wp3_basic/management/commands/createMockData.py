@@ -19,6 +19,7 @@ PATH_TO_MOCK_LOCATIONS=os.path.join(BASE_DIR, 'wp3_basic/mockData/locations.csv'
 PATH_TO_MOCK_MODULE_SESSIONS=os.path.join(BASE_DIR, 'wp3_basic/mockData/moduleSessions.csv')
 PATH_TO_MOCK_CREDENTIALS=os.path.join(BASE_DIR, 'wp3_basic/mockData/credentialResults.csv')
 PATH_TO_MOCK_DEVICES=os.path.join(BASE_DIR, 'wp3_basic/mockData/deviceResults.csv')
+PATH_TO_DEMO_IMSI_RESULTS=os.path.join(BASE_DIR, 'wp3_basic/mockData/demoIMSIResults.csv')
 
 def createMockDataUser()->User:
     # Check if exists
@@ -148,12 +149,22 @@ def createCredentialResultFromRow(moduleSession, dev, credential):
     )
     cred.save()
     print(f"\t\t\t\tcreated credential result: type={cred.type}, username={cred.username}, password={cred.password}")
+    
+def createDemoIMSIFromIMSIRow(moduleSession, imsiRow):
+    """takes a row from mock credentials and create django Credential_Result entry"""
+    from wp3_basic.models import Demo_IMSI_Result
+    imsi = Demo_IMSI_Result(module_session_captured=moduleSession, imsi=imsiRow['IMSI'])
+    imsi.save()
+    print(f"\t\t\tcreated demo imsi result: imsi={imsi.imsi}")
 
-def createMockDataFromUser(user: User):
+def createMockDataFromUser(user: User, loadDemoImsi=False):
     mockLocations = pd.read_csv(PATH_TO_MOCK_LOCATIONS)
     mockModuleSessions = pd.read_csv(PATH_TO_MOCK_MODULE_SESSIONS)
     mockDevices = pd.read_csv(PATH_TO_MOCK_DEVICES)
     mockCredentials = pd.read_csv(PATH_TO_MOCK_CREDENTIALS)
+    if loadDemoImsi:
+        demoIMSIs = pd.read_csv(PATH_TO_DEMO_IMSI_RESULTS)
+        print(demoIMSIs)
     
     currentSessionID = None
     currentSession = None
@@ -177,7 +188,11 @@ def createMockDataFromUser(user: User):
                 # create any credential results associated with device instance
                 for _, credential in mockCredentials.query('deviceNum == @devId').iterrows():
                     credResult = createCredentialResultFromRow(ms, dev, credential)
-
+            
+            # if demo-ing create ismi results at this loaction
+            if loadDemoImsi:
+                for _, imsiResult in demoIMSIs.query('moduleSessionNum == @msId').iterrows():
+                    createDemoIMSIFromIMSIRow(ms, imsiResult)
 
 def clearMockData():
     """Delete user and all deletions cascade"""
@@ -185,16 +200,25 @@ def clearMockData():
     print(f"deleted mock data user: {MOCK_DATA_USERNAME}")
     
         
-def createMockData():
+def createMockData(includeIMSI):
     user = createMockDataUser()
-    createMockDataFromUser(user)
+    createMockDataFromUser(user, includeIMSI)
     print("Mock Data Initialised")
     
 class Command(BaseCommand):
     help = "Creates mockData user with mockData populated"
 
+    def add_arguments(self, parser):
+
+        # Named (optional) arguments
+        parser.add_argument(
+            "--includeDemoIMSI",
+            action="store_true",
+            help="include demo imsi data",
+        )
+
     def handle(self, *args, **options):
-        createMockData()
+        createMockData(options['includeDemoIMSI'])
         self.stdout.write(
             self.style.SUCCESS('Mock Data User Created (username:mockData, password:mockData) with mock data initialised')
         )
