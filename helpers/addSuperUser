@@ -1,2 +1,7 @@
 #!/bin/bash
-python manage.py createsuperuser
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+$pythonInterpreter manage.py createsuperuser

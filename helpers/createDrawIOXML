@@ -1,10 +1,16 @@
 #!/bin/bash
 
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+
 # create json
-python manage.py graph_models -a --json -o myapp_models.json
+$pythonInterpreter manage.py graph_models -a --json -o myapp_models.json
 
 # Convert to xml
-python ./ConvertGraphToXMLForDrawIO/convertGraphModelJsonToDrawIO.py --graph_models_json ./myapp_models.json --attemptFKRelations --nameMappingsJsonPath ./helpers/drawioModelMappings.json --output ./drawioXML.xml
+$pythonInterpreter ./ConvertGraphToXMLForDrawIO/convertGraphModelJsonToDrawIO.py --graph_models_json ./myapp_models.json --attemptFKRelations --nameMappingsJsonPath ./helpers/drawioModelMappings.json --output ./drawioXML.xml
 
 # rm json
 rm myapp_models.json

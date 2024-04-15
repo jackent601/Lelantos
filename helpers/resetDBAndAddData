@@ -24,3 +24,6 @@ $pythonInterpreter manage.py makemigrations
 $pythonInterpreter manage.py shell -c "import django;django.db.connection.cursor().execute('SELECT InitSpatialMetaData(1);')";
 # migrate
 $pythonInterpreter manage.py migrate
+
+# mock data
+$pythonInterpreter manage.py createMockData

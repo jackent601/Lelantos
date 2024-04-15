@@ -4,7 +4,13 @@ if [[ "$#" -lt 1 ]]; then
 	exit 1
 fi
 
-python manage.py startapp $1
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+
+$pythonInterpreter manage.py startapp $1
 
 echo "success! Next steps are:"
 echo "\tAdd to app's AppConfig to INSTALLED_APPS in settings"

@@ -1,1 +1,8 @@
-python3 manage.py runserver 0.0.0.0:8000
+#!/bin/bash
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+
+$pythonInterpreter manage.py runserver 0.0.0.0:8000
