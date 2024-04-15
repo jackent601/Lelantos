@@ -1,0 +1,47 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+    {% if user.is_authenticated %}
+        <div>
+
+            <h5>Analysis<h5>
+
+            <div class="form-check form-switch">
+                <!-- Optional clustering -->
+                    {% if clustered %}
+                    <a href="?{{ modelParamReq }}" class="btn btn-primary {{ disableClustering }}" aria-disabled="true">uncluster markers</a>
+                    {% else %}
+                    <a href="?clusterMarkers&{{ modelParamReq }}" class="btn btn-primary {{ disableClustering }}">cluster markers</a>
+                    {% endif %}
+
+                <!-- Locations (Home) -->
+                <a href="{% url 'analysis_home' %}" class="btn btn-primary">locations</a>
+
+                <!-- Analysis Options -->
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Analysis Options
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                {% for modelResultOption in modelResultOptions %}
+                    <a class="dropdown-item" href="{% url 'analysis_by_model' %}?app_label={{ modelResultOption.app_label }}&model_name={{ modelResultOption.model_name }}">{{ modelResultOption.model_name }}s</a>
+                    <a class="dropdown-item" href="{% url 'model_network' %}?app_label={{ modelResultOption.app_label }}&model_name={{ modelResultOption.model_name }}">{{ modelResultOption.model_name }}_Network</a>
+                <!--
+                <a href="{% url 'analysis_by_model' %}?app_label={{ modelResultOption.app_label }}&model_name={{ modelResultOption.model_name }}" class="btn btn-secondary">{{ modelResultOption.model_name }}s</a>
+                <a href="{% url 'model_network' %}?app_label={{ modelResultOption.app_label }}&model_name={{ modelResultOption.model_name }}" class="btn btn-secondary">{{ modelResultOption.model_name }}_Network</a>
+                -->
+                {% endfor %}
+                </div>
+
+            </div>
+
+            <br>
+
+            <!-- Template Content -->
+            {% block analysisMainDisplay %}
+            {% endblock %}
+            {% block analysisFootDisplay %}
+            {% endblock %}
+            
+        </div>
+    {% endif %}
+{% endblock %}

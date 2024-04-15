@@ -19,6 +19,43 @@ import plotly
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # URLS
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# - - - - - - - - - - - - - - Utils - - - - - - - - - - - - - - - - - 
+def getContextFromRequestAndValidate(request):
+    """
+    Retrieves all values needed for all template rendering. 
+    Including Model type & Validation
+    """
+    # Display Context
+    displayContext={}
+    
+    # unpack model params to get specific model
+    app_label = request.GET.get('app_label', None)
+    model_name = request.GET.get('model_name', None)
+    if app_label is None or model_name is None:
+        message=messages.error(request, "app_label and model_name must be provided parameters to view model_results")
+        return None, None, redirect('analysis_home') 
+    pageParamReq=f"app_label={app_label}&model_name={model_name}" 
+    
+    # Load to context
+    displayContext['app_label']=app_label 
+    displayContext['model_name']=model_name 
+    displayContext['modelParamReq']=pageParamReq
+    
+    # cluster markers
+    displayContext['clusterMarkers'] = request.GET.get('clusterMarkers', None)
+    
+    # Get model type from params
+    modelType = apps.get_model(app_label=displayContext['app_label'], model_name=displayContext['model_name'])
+    displayContext['uniqueIdentifierPattern']=modelType.getModelUniqueIdentifierPatternString()
+    
+    # Get subclasses available for detailed analysis to autogenerate buttons
+    subclasses = Model_Result_Instance.get_subclasses()
+    subclassesNames=[{
+        'model_name':subclass._meta.model_name,
+        'app_label':subclass._meta.app_label} 
+                     for subclass in subclasses]
+    displayContext['modelResultOptions']=subclassesNames
+    return modelType, displayContext, None 
 
 # - - - - - - - - - - - - - - MAPS - - - - - - - - - - - - - - - - - -
 # Base Wrapper For Mapping Results (or Locations as a specific case)
@@ -43,23 +80,18 @@ def analysis_by_model_results(request,
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
-    # unpack model params to get specific model
-    app_label = request.GET.get('app_label', None)
-    model_name = request.GET.get('model_name', None)
-    if app_label is None or model_name is None:
-        message=messages.error(request, "app_label and model_name must be provided parameters to view model_results")
-        return redirect('analysis_home') 
-    pageParamReq=f"app_label={app_label}&model_name={model_name}"       
-    
-    # get instance to access methods
-    modelType = apps.get_model(app_label=app_label, model_name=model_name)
+    # Display Context
+    modelType, displayContext, _redirect=getContextFromRequestAndValidate(request)
+    if _redirect is not None:
+        return _redirect
     
     # Get Map
-    m, mapAddObj, clustered = getMap(request)
+    m, mapAddObj, clustered = getMap(displayContext['clusterMarkers'])
+    displayContext['clustered']=clustered
     
     # Switch on whether mapping specific result, or all results
     if specificResult:
-            # unpack specific model request & validate
+        # unpack specific model request & validate
         paramsReqDict, errMsg = modelType.unpackSpecificModelRequest(request)
         if errMsg is not None:
             message=messages.error(request, errMsg)
@@ -67,9 +99,8 @@ def analysis_by_model_results(request,
 
         # Use request params to parse QuerySet, display message, and request string
         filterQuerySet, displayMsg, reqParamString = modelType.parseSpecificModelParamRequest(active_session.user, paramsReqDict)
-        pageParamReq+=f"&{reqParamString}"
-        
-        map_title=displayMsg
+        displayContext['modelParamReq']+=f"&{reqParamString}"
+        displayContext['map_title']=displayMsg
         
         # Add location for each instance
         for modelEntry in filterQuerySet:
@@ -77,7 +108,7 @@ def analysis_by_model_results(request,
     else:
         # Plot Markers that have model results
         colour_idx = 0
-        map_title=f"Locations where {model_name}s were captured"
+        displayContext['map_title']=f"Locations where {displayContext['model_name']}s were captured"
         for sesh in Session.objects.filter(user=active_session.user):
             # Get all locations for each session
             for loc in Location.objects.filter(session=sesh):
@@ -86,7 +117,7 @@ def analysis_by_model_results(request,
             colour_idx=(colour_idx+1)%len(folium_colours)
     
     # Get unique models to display in table for filter
-    _, uniqueModelsDictsOnly, uniqueFieldIdentifiers = modelType.getAllModelsFromUserAndUniqueSet(active_session.user)
+    _, uniqueModelsDictsOnly, _ = modelType.getAllModelsFromUserAndUniqueSet(active_session.user)
     
     # Get the total filter for each model to populate results table
     uniqueModels=[]
@@ -94,33 +125,14 @@ def analysis_by_model_results(request,
         for modelDict in uniqueModelsDictsOnly:
             totalFilterReq = "&".join([f"{key}={val}" for key, val in modelDict.items()])
             uniqueModels.append({"modelDict":modelDict, "modelTotalFilterReq":totalFilterReq})
-            
-    # Get subclasses available for detailed analysis to autogenerate buttons
-    subclasses = Model_Result_Instance.get_subclasses()
-    subclassesNames=[{
-        'model_name':subclass._meta.model_name,
-        'app_label':subclass._meta.app_label} 
-                     for subclass in subclasses]
     
-    # title map
-    results_title=f"All {model_name}s"
+    # Load remaining context
+    displayContext['results_title']=f"All {displayContext['model_name']}s"
+    displayContext['map']=m._repr_html_()
+    displayContext['uniqueModels']=uniqueModels
     
     # render this model type
-    return render(request, template, 
-                  {'map': m._repr_html_(),
-                   'map_title':map_title,
-                   # For clustering switch 
-                   'clustered':clustered, 
-                   'modelParamReq':pageParamReq,
-                   # For Nav Button Generation
-                   'modelResultOptions':subclassesNames,
-                   # For display
-                   'model_name': model_name,
-                   'uniqueIdentifierPattern':modelType.getModelUniqueIdentifierPatternString(),
-                   # For Table of Results
-                   'results_title':results_title,
-                   'uniqueFieldIdentifiers': uniqueFieldIdentifiers,
-                   'uniqueModels':uniqueModels})
+    return render(request, template, displayContext)
 
 # Individual URLs to handle wrapper
 def analysis_home(request):
@@ -132,7 +144,7 @@ def analysis_home(request):
     request.GET._mutable = True
     request.GET['app_label']=Location._meta.app_label
     request.GET['model_name']=Location._meta.model_name
-    return analysis_by_model_results(request, template="analysis/analysis.html")
+    return analysis_by_model_results(request, template="analysis/analysis_home.html")
     # return analysis_by_model_type(request, template="analysis/analysis.html", modelType=Location)
 
 def analysis_of_all_a_model_results(request):
@@ -145,9 +157,8 @@ def analysis_of_a_specific_model_result(request):
      
 # - - - - - - - - - - - Network Graphs (from co-locations) - - - - - - - - - - - - - - - - - -
 # Base Wrapper For Networking Results
-def modelNetwork(request, 
-                 modelType,
-                 template, 
+def model_network(request, 
+                 template="analysis/modelNetwork.html", 
                  minNodeSize=30, 
                  maxNodeSize=70):
     """
@@ -174,12 +185,17 @@ def modelNetwork(request,
         message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
+    # Display Context
+    modelType, displayContext, _redirect=getContextFromRequestAndValidate(request)
+    if _redirect is not None:
+        return _redirect
+    
     # Nodes (credentials) - - - - - - - - - - - - - - - 
-    m = modelType() # get instance to access methods
-    nodes=m.getNodesFromUser(user=active_session.user)
+    # m = modelType() # get instance to access methods
+    nodes=modelType.getNodesFromUser(user=active_session.user)
 
     # Edges (credential co-located)  - - - - - - - - -
-    edges, nodesWithEdges = m.getNodeEdgesByLocationFromUser(user=active_session.user)
+    edges, nodesWithEdges = modelType.getNodeEdgesByLocationFromUser(user=active_session.user)
               
     # Remove nodes with no connections
     nodesWithNoEdges=[]
@@ -194,61 +210,44 @@ def modelNetwork(request,
     networkGraph=plotly.offline.plot(fig, auto_open = False, output_type="div")
     
     # get credential details for each table
-    NodesWithNoEdges=[m.getModelDictFromNodeString(c) for c in nodesWithNoEdges]
-    NodesWithEdges=[m.getModelDictFromNodeString(c) for c in nodesWithEdges]
+    NodesWithNoEdges=[modelType.getModelDictFromNodeString(c) for c in nodesWithNoEdges]
+    NodesWithEdges=[modelType.getModelDictFromNodeString(c) for c in nodesWithEdges]
     
-    return render(request, template, 
-                  {'networkGraph':networkGraph, 
-                   'nodesWithNoEdges':NodesWithNoEdges,
-                   'nodesWithEdges':NodesWithEdges})
+    # display text
+    map_title=f"{displayContext['model_name']}s networked by co-location"
+    map_sub_title=f"\"{modelType.getModelUniqueIdentifierPatternString()}\" assumed to uniquely identifier a {displayContext['model_name']}"
     
-def credentialNetwork(request):
-    """
-    Creates a network graph for credential results based on results captured at the same location
-    As networked by location:
-        Each node represents a unique credential result (agnostic of location)
-        Each edge represents where a both credential results are present at the same location
+    # Get the total filter for each model to populate results table
+    NodesWithEdgesForDisplay=[]
+    for nodeDict in NodesWithEdges:
+        totalFilterReq = "&".join([f"{key}={val}" for key, val in nodeDict.items()])
+        NodesWithEdgesForDisplay.append({"modelDict":nodeDict, "modelTotalFilterReq":totalFilterReq})
+    NodesWithNoEdgesForDisplay=[]
+    for nodeDict in NodesWithNoEdges:
+        totalFilterReq = "&".join([f"{key}={val}" for key, val in nodeDict.items()])
+        NodesWithNoEdgesForDisplay.append({"modelDict":nodeDict, "modelTotalFilterReq":totalFilterReq})
         
-    Nodes are scaled in colour and size based on connectivity
+    # Load remaining context
+    displayContext['map']=networkGraph
+    displayContext['map_title']=map_title
+    displayContext['disableClustering']='disabled'
+    displayContext['map_sub_title']=map_sub_title
+    displayContext['nodesWithEdges']=NodesWithEdgesForDisplay
+    displayContext['nodesWithNoEdges']=NodesWithNoEdgesForDisplay
         
-    It does the node/edge creation first to omit any credentials not networked from graph for a clean
-    output and displays these in a separate table instead 
-    """
-    return modelNetwork(request, Credential_Result, "analysis/credentialNetwork.html")
-    
-def deviceNetwork(request):
-    """
-    Creates a network graph for device results based on results captured at the same location
-    
-    WARNING: mac_addr:type assumed to be unique identifier however with rotating mac address 
-    security protocols this is not true hence this if POC only
-    
-    As networked by location:
-        Each node represents a unique device result (agnostic of location)
-        Each edge represents where a both device results are present at the same location
-        
-    Nodes are scaled in colour and size based on connectivity
-        
-    It does the node/edge creation first to omit any credentials not networked from graph for a clean
-    output and displays these in a separate table instead 
-    """
-    return modelNetwork(request, 
-                         Device_Instance,
-                        "analysis/deviceNetwork.html")
-
+    return render(request, template, displayContext) 
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # Utils
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # - - - - - - - - - - - - Map Utils - - - - - - - - - - - - - - - -
-def getMap(request):
+def getMap(clusterMarkers):
     """Creates folium map to render with optional clustering based on request params"""
     m = folium.Map(location=[DEFAULT_LOCATION_SETTINGS['default_lat'], DEFAULT_LOCATION_SETTINGS['default_lon']], zoom_start=9)
     mapAddObj = m
     
     # optional clustering
     clustered=False
-    clusterMarkers = request.GET.get('clusterMarkers', None)
     if clusterMarkers is not None:
         mapAddObj = MarkerCluster().add_to(m)
         clustered=True

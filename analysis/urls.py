@@ -11,6 +11,7 @@ urlpatterns = [
     path("analysis_by_specific_model_result/", views.analysis_of_a_specific_model_result, name="analysis_by_specific_model_result"),
     
     # Results (networked)
-    path("credentialNetwork/", views.credentialNetwork, name="credentialNetwork"),
-    path("deviceNetwork/", views.deviceNetwork, name="deviceNetwork"),
+    path("modelNetwork/", views.model_network, name="model_network"),
+    # path("credentialNetwork/", views.credentialNetwork, name="credentialNetwork"),
+    # path("deviceNetwork/", views.deviceNetwork, name="deviceNetwork"),
 ]

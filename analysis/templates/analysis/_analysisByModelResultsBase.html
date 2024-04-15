@@ -1,0 +1,31 @@
+{% extends "analysis/_analysisBase.html" %}
+
+{% block analysisFootDisplay %}            
+<!-- Results Table -->
+<p>{{ results_title }}</p>
+<p><small>"{{ uniqueIdentifierPattern }}" assumed to uniquely identifier a {{ model_name }}</small></p>
+<div class="card" >
+    <table class="table table">
+        <thead>
+            <tr>
+            {% for id in uniqueFieldIdentifiers %}
+            <th scope="col">{{ id }}</th>
+            {% endfor %}
+            <th scope="col">View</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dev in uniqueModels %}
+                <tr>
+                    <!-- loop each key,val defining model -->
+                    {% for devKey, devValue in dev.modelDict.items %}
+                        <td><a href="{% url 'analysis_by_specific_model_result' %}?{{ modelParamReq }}&{{ devKey }}={{ devValue }}">{{ devValue }}</a></td>
+                    {% endfor %}
+                    <!-- add the overall filter -->
+                    <td><a href="{% url 'analysis_by_specific_model_result' %}?{{ modelParamReq }}&{{ dev.modelTotalFilterReq }}">View</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

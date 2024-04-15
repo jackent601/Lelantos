@@ -247,6 +247,7 @@ class Model_Result_Instance(models.Model):
     # 'unique' sets i.e. nodes (location-agnostic) in order to connect 'uniqie' entries based on location
     # these functions identify 'nodes' based on models uniqueIdentifiers  
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    @classmethod 
     def getNodeIdentifierFromDict(self, instanceDict):
         """
         Takes a dictionary representation of model and returns the unique node string for that model
@@ -262,6 +263,7 @@ class Model_Result_Instance(models.Model):
         """
         return self.getNodeIdentifierFromDict(self.__dict__)
 
+    @classmethod 
     def getModelDictFromNodeString(self, nodeString):
         """Gets device dictionary from node identifier"""
         uniqueIdValues=nodeString.split(":")
@@ -300,7 +302,7 @@ class Model_Result_Instance(models.Model):
         for sesh in Session.objects.filter(user=user):
             for loc in Location.objects.filter(session=sesh):
                 # get credentials captured at this location
-                modelQS=list(self.__class__.objects.filter(module_session_captured__location=loc))
+                modelQS=list(self.objects.filter(module_session_captured__location=loc))
                 # Check if multiple credentials captured
                 if len(modelQS)>1:
                     # loop through QS until penultimate element (as ultimate element will be paired in subloop)
