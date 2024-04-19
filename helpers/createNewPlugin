@@ -1,0 +1,190 @@
+#!/bin/bash
+# Handle args
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+
+# defaults
+imgURL=wp3_basic/imgs/analysis/analysis.png
+
+_usage() {
+cat << EOF
+  ${0} APP_NAME PLUGIN_MODEL [OPTIONS]
+
+  Creates the django infrastructure for a new plugin
+
+  Steps:
+        - create django app
+        - Generate home template for plugin
+        - Generate model form for plugin
+        - Generate view to render home using modelform for plugin
+        - Add urls file for plugin
+        - Add plugin card to home page
+        - Add plugin urls to overall project
+        - Add plugin to installed apps for project
+
+  REQUIRED
+    APP_NAME            name of this new plugin
+    PLUGIN_MODEL        base model this plugin will extend
+
+  OPTIONS
+    -i,--img_url        path to image to display on plugin-home and global 
+                        home screen
+    -d,--description    plugin description
+EOF
+}
+
+# Count all of the args passed into the script and continue looping while we have args.
+position=0
+while [[ "${#}" -gt 0 ]]; do
+case "${1}" in
+    -h|--help|help)
+    _usage
+    exit 0
+    ;;
+    -i|--img_url)
+    imgURL="${2:-}"
+    [[ -z "${imgURL}" ]] && printf "%s must have a value\n\n" "${1}" >&2 && _usage >&2 && exit 1
+    shift 2
+    ;;
+    -d|--description)
+    appDescription="${2:-}"
+    [[ -z "${appDescription}" ]] && printf "%s must have a value\n\n" "${1}" >&2 && _usage >&2 && exit 1
+    shift 2
+    ;;
+    # We've handled all of our flags, now it's onto anything else (the positional args).
+    *)
+    # Determine which position we're at (this value defaults to 0 earlier in the script).
+    case "${position}" in
+        0)
+        appName="${1}"
+        position=1
+        shift
+        ;;
+        1)
+        PLUGIN_MODEL="${1}"
+        position=2
+        shift
+        ;;
+        2)
+        printf "Unknown argument: %s\n\n" "${1}" >&2
+        _usage >&2
+        exit 1
+        ;;
+    esac
+    ;;
+esac
+done
+
+# Validation.
+[[ -z "${appName}" ]] && printf "Requires APP_NAME\n\n" >&2 && _usage >&2 && exit 1
+[[ -z "${PLUGIN_MODEL}" ]] && printf "Requires PLUGIN_MODEL\n\n" >&2 && _usage >&2 && exit 1
+
+echo "creating new plugin"
+echo "  name: ${appName}"
+echo "  base model: ${PLUGIN_MODEL}"
+echo "  desc: ${appDescription}"
+echo "  img url: ${imgURL}"
+
+# create django app
+echo "starting django app"
+$pythonInterpreter manage.py startapp $appName
+
+# Generate home template for plugin
+echo "creating plugin home template"
+mkdir -p ${appName}/templates/${appName}
+cat << EOF > ${appName}/templates/${appName}/home.html
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+
+    {% if user.is_authenticated %}
+        <div class="card" style="width: 38rem;">
+            <img class="card-img-top" src="{% static '${imgURL}' %}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">${appName}</h5>
+                <p>${appDescription}<p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div>
+                        {{ form }}
+                    </div>
+                    <br>
+                    <div>
+                        <button class="btn btn-primary" type="submit">
+                            Launch Plugin!
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+EOF
+mkdir -p ${appName}/templates/${appName}
+
+
+# Generate model form for plugin
+echo "creating plugin forms.py"
+cat << EOF > ${appName}/forms.py
+from django.forms import ModelForm
+from wp3_basic.models import ${PLUGIN_MODEL}
+
+class ${appName}Form(ModelForm):
+    class Meta:
+        model=${PLUGIN_MODEL}
+        exclude=['module_session_captured',*${PLUGIN_MODEL}.uniqueIdentifiers]
+EOF
+
+# Generate view to render home using modelform for plugin
+echo "creating plugin views.py"
+cat << EOF > ${appName}/views.py
+from django.shortcuts import render
+from ${appName}.forms import ${appName}Form
+
+# Starting template for new plugin.
+def ${appName}Home(request):
+    return render(request, "${appName}/home.html", {'form':${appName}Form()})
+
+EOF
+
+# Add urls file for plugin
+echo "creating plugin urls.py"
+cat << EOF > ${appName}/urls.py
+from django.urls import path
+
+from . import views
+
+urlpatterns = [path("${appName}_home/", views.${appName}Home, name="${appName}_home"),]
+EOF
+
+# Add plugin card to home page
+echo "adding plugin home to project home page"
+cat << EOF >> wp3_basic/templates/wp3_basic/_home_apps.html
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static '${imgURL}' %}" alt="Card image cap">
+                    <div class="col text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">${appName}</h5>
+                            <p class="card-text">${appDescription}</p>
+                            <a href="{% url '${appName}_home' %}" class="btn btn-primary">Launch</a>
+                        </div>
+                    </div>
+                </div>
+EOF
+cat wp3_basic/templates/wp3_basic/_home_apps.html wp3_basic/templates/wp3_basic/_home_login.html > wp3_basic/templates/wp3_basic/home.html
+
+# Add plugin urls to overall project
+echo "adding plugin urls to overall project"
+sed -i -e '$i\
+    path("", 'include\(\"$appName'.urls")),\' wp3_portal/urls.py
+
+# Add plugin to installed apps for project
+echo "adding plugin to installed apps"
+appConfigName=$($pythonInterpreter -c 'import sys;appName=sys.argv[1];appElems=appName.split("_");capAppElems=[a.capitalize() for a in appElems];print("".join(capAppElems))' $appName)
+appConfigPath=${appName}.apps.${appConfigName}Config
+sed -i -e '/wp3_basic.apps.Wp3BasicConfig/a "'$appConfigPath'",' wp3_portal/settings.py
+
+

@@ -20,7 +20,6 @@ from django.urls import include, path
 urlpatterns = [
     path("", include("wp3_basic.urls")),
     path("", include("portal_auth.urls")),
-    # path("", include("wp3_broker.urls")),
     path("", include("aircrack_ng_broker.urls")),
     path("", include("wifiphisher_broker.urls")),
     path("", include("analysis.urls")),

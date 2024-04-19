@@ -1,0 +1,61 @@
+{% extends "wp3_basic/base.html" %}
+{% block content %}
+    {% load static %}
+    {% if user.is_authenticated %}
+        <div class="row">
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/location/location.png' %}" alt="Card image cap">
+                    <div class="col text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Location</h5>
+                            <p class="card-text">Update Session Location</p>
+                            <a href="{% url 'setLocation' %}" class="btn btn-primary">See Map</a>
+                            <p></p>
+                            <a href="{% url 'previous_locations' %}" class="btn btn-primary">Previous Locations</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/scan/scanDragon.png' %}" alt="Card image cap">
+                    <div class="col text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Wifi Scan</h5>
+                            <p class="card-text">Aircrack-ng wifi monitoring</p>
+                            <a href="{% url 'ng_wifi_scan_home' %}" class="btn btn-primary">Scan</a>
+                            <p></p>
+                            <a href="{% url 'ng_wifi_previous_scans' %}" class="btn btn-primary">Previous Scans</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
+                    <div class="col text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Captive Portal</h5>
+                            <p class="card-text">Wifiphisher Captive Portal</p>
+                            <a href="{% url 'captive_portal_home' %}" class="btn btn-primary">Captive Portal</a>
+                            <p></p>
+                            <a href="{% url 'captive_portal_previous_captures' %}" class="btn btn-primary">Previous Captures</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/imgs/analysis/analysis.png' %}" alt="Card image cap">
+                    <div class="col text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Analysis</h5>
+                            <p class="card-text">Study data from this session and more</p>
+                            <a href="{% url 'analysis_home' %}" class="btn btn-primary">Investigate</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="width: 18rem;">
+                    <img class="card-img-top" src="{% static 'wp3_basic/static/wp3_basic/imgs/pluginPlaceholder.png' %}" alt="Card image cap">
+                    <div class="col text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">trying_again</h5>
+                            <p class="card-text">descripton is here</p>
+                            <a href="{% url 'trying_again_home' %}" class="btn btn-primary">Launch</a>
+                        </div>
+                    </div>
+                </div>

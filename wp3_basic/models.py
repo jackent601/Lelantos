@@ -351,6 +351,7 @@ class Credential_Result(Model_Result_Instance):
 
 # Uncomment to demo IMSI capturing mock data
 class Demo_IMSI_Result(Model_Result_Instance):
+    sdr_settings=models.CharField(max_length=200)
     imsi=models.CharField(max_length=200)
     uniqueIdentifiers=('imsi',)
 

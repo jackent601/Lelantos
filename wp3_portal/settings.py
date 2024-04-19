@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'portal_auth.apps.PortalAuthConfig',
     'wp3_basic.apps.Wp3BasicConfig',
     'analysis.apps.AnalysisConfig',
-    # 'wp3_broker.apps.Wp3BrokerConfig',
     'aircrack_ng_broker.apps.AircrackNgBrokerConfig',
     'wifiphisher_broker.apps.WifiphisherBrokerConfig',
     'django_extensions',
