@@ -1,7 +1,7 @@
 import subprocess
 import time
 from django.db import models
-from wp3_basic.models import Session, Module_Session, Credential_Result, Device_Instance
+from lelantos_base.models import Session, Module_Session, Credential_Result, Device_Instance
 from wifiphisher_broker.utils import read_dnsmasq_file, get_victims_currently_connected, parse_creds_log
 import wifiphisher_broker.config as cfg
 

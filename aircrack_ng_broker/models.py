@@ -1,5 +1,5 @@
 from django.db import models
-from wp3_basic.models import Module_Session
+from lelantos_base.models import Module_Session
 import aircrack_ng_broker.config as cfg
 
 class Wifi_Scan(Module_Session):

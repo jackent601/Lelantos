@@ -7,7 +7,7 @@ if [[ "$?" -ne 0 ]];then
 fi
 
 # defaults
-imgURL=wp3_basic/imgs/analysis/analysis.png
+imgURL=lelantos_base/imgs/analysis/analysis.png
 
 _usage() {
 cat << EOF
@@ -22,6 +22,7 @@ cat << EOF
         - Generate view to render home using modelform for plugin
         - Add urls file for plugin
         - Add plugin card to home page
+        - Add plugin to home nav bar
         - Add plugin urls to overall project
         - Add plugin to installed apps for project
 
@@ -96,7 +97,7 @@ $pythonInterpreter manage.py startapp $appName
 echo "creating plugin home template"
 mkdir -p ${appName}/templates/${appName}
 cat << EOF > ${appName}/templates/${appName}/home.html
-{% extends "wp3_basic/base.html" %}
+{% extends "lelantos_base/base.html" %}
 {% block content %}
     {% load static %}
 
@@ -130,7 +131,7 @@ mkdir -p ${appName}/templates/${appName}
 echo "creating plugin forms.py"
 cat << EOF > ${appName}/forms.py
 from django.forms import ModelForm
-from wp3_basic.models import ${PLUGIN_MODEL}
+from lelantos_base.models import ${PLUGIN_MODEL}
 
 class ${appName}Form(ModelForm):
     class Meta:
@@ -162,7 +163,7 @@ EOF
 
 # Add plugin card to home page
 echo "adding plugin home to project home page"
-cat << EOF >> wp3_basic/templates/wp3_basic/_home_apps.html
+cat << EOF >> lelantos_base/templates/lelantos_base/_home_apps.html
                 <div class="card" style="width: 18rem;">
                     <img class="card-img-top" src="{% static '${imgURL}' %}" alt="Card image cap">
                     <div class="col text-center">
@@ -174,17 +175,25 @@ cat << EOF >> wp3_basic/templates/wp3_basic/_home_apps.html
                     </div>
                 </div>
 EOF
-cat wp3_basic/templates/wp3_basic/_home_apps.html wp3_basic/templates/wp3_basic/_home_login.html > wp3_basic/templates/wp3_basic/home.html
+cat lelantos_base/templates/lelantos_base/_home_apps.html lelantos_base/templates/lelantos_base/_home_login.html > lelantos_base/templates/lelantos_base/home.html
+
+# Add plugin to nav bar
+echo "adding plugin home to project home nav bar"
+cat << EOF >> lelantos_base/templates/lelantos_base/_navbar_head.html
+          <a href="{% url '${appName}_home' %}" class="dropdown-item">${appName}</a>
+EOF
+cat lelantos_base/templates/lelantos_base/_navbar_head.html lelantos_base/templates/lelantos_base/_navbar_foot.html > lelantos_base/templates/lelantos_base/navbar.html
+
 
 # Add plugin urls to overall project
 echo "adding plugin urls to overall project"
 sed -i -e '$i\
-    path("", 'include\(\"$appName'.urls")),\' wp3_portal/urls.py
+    path("", 'include\(\"$appName'.urls")),\' lelantos/urls.py
 
 # Add plugin to installed apps for project
 echo "adding plugin to installed apps"
 appConfigName=$($pythonInterpreter -c 'import sys;appName=sys.argv[1];appElems=appName.split("_");capAppElems=[a.capitalize() for a in appElems];print("".join(capAppElems))' $appName)
 appConfigPath=${appName}.apps.${appConfigName}Config
-sed -i -e '/wp3_basic.apps.Wp3BasicConfig/a "'$appConfigPath'",' wp3_portal/settings.py
+sed -i -e '/lelantos_base.apps.Wp3BasicConfig/a "'$appConfigPath'",' lelantos/settings.py
 
 

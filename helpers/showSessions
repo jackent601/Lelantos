@@ -1,1 +1,1 @@
-sqlite3 dbWithGeo.sqlite3 'SELECT * FROM wp3_basic_session' -header -markdown
+sqlite3 dbWithGeo.sqlite3 'SELECT * FROM lelantos_base_session' -header -markdown

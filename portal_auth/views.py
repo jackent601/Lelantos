@@ -2,10 +2,10 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.contrib.auth import authenticate, login, logout 
 from django.contrib import messages
-from wp3_basic.models import Session, Module_Session
+from lelantos_base.models import Session, Module_Session
 from django.utils import timezone
 
-from wp3_basic.management.commands.createMockData import MOCK_DATA_USERNAME
+from lelantos_base.management.commands.createMockData import MOCK_DATA_USERNAME
 
 import portal_auth.utils as auth_utils
 

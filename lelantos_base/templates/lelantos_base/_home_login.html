@@ -1,0 +1,12 @@
+        </div>
+    {% else %}
+        <div class="card text-center" style="width: 18rem;">
+            <img class="card-img-top" src="{% static 'lelantos_base/imgs/home/pumpkinDragonLogo.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <p class="card-text">Login to start the fun!</p>
+                <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+

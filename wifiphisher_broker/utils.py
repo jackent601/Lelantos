@@ -3,7 +3,7 @@ import oscrypto
 from django.contrib import messages
 
 # Models
-from wp3_basic.models import Session
+from lelantos_base.models import Session
 
 import wifiphisher_broker.config as cnf
 

@@ -5,11 +5,11 @@ from django.apps import apps
 import portal_auth.utils as auth_utils  
 
 # Rendering Map Locations
-from wp3_portal.settings import DEFAULT_LOCATION_SETTINGS 
+from lelantos.settings import DEFAULT_LOCATION_SETTINGS 
 import folium
 from folium.plugins import MarkerCluster
-from wp3_basic.models import Session, Location, Credential_Result, Device_Instance, Model_Result_Instance
-from wp3_portal.settings import folium_colours
+from lelantos_base.models import Session, Location, Credential_Result, Device_Instance, Model_Result_Instance
+from lelantos.settings import folium_colours
 
 # Network Graphs
 import networkx as nx

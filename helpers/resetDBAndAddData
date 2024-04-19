@@ -9,8 +9,8 @@ mv aircrack_ng_broker/migrations/0*.py aircrack_ng_broker/migrations/_archive
 mkdir -p wifiphisher_broker/migrations/_archive
 mv wifiphisher_broker/migrations/0*.py wifiphisher_broker/migrations/_archive
 
-mkdir -p wp3_basic/migrations/_archive
-mv wp3_basic/migrations/0*.py wp3_basic/migrations/_archive
+mkdir -p lelantos_base/migrations/_archive
+mv lelantos_base/migrations/0*.py lelantos_base/migrations/_archive
 
 # Get python interpreter
 pythonInterpreter=python

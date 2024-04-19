@@ -4,7 +4,7 @@ from django.utils import timezone
 import portal_auth.utils as auth_utils
 
 # Models
-# from wp3_basic.models import Session
+# from lelantos_base.models import Session
 from wifiphisher_broker.models import Wifiphisher_Captive_Portal_Session, get_current_wphisher_sessions
 
 

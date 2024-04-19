@@ -1,7 +1,7 @@
 from django.shortcuts import redirect
 from django.http import HttpRequest
 from django.contrib import messages
-from wp3_basic.models import Session, get_new_valid_session_id
+from lelantos_base.models import Session, get_new_valid_session_id
 from django.utils import timezone
 from django.contrib.auth.models import User
 

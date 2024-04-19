@@ -1,8 +1,8 @@
-wp3_portal/__pycache__/*
+lelantos/__pycache__/*
 
-wp3_basic/__pycache__/*
-wp3_basic/migrations/__pycache__/*
-wp3_basic/migrations/*
+lelantos_base/__pycache__/*
+lelantos_base/migrations/__pycache__/*
+lelantos_base/migrations/*
 
 wp3_broker/__pycache__/*
 wp3_broker/migrations/__pycache__/*

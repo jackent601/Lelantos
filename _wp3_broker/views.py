@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 import requests
 
-from wp3_basic.models import Session
+from lelantos_base.models import Session
 import portal_auth.utils as auth_utils
 import wp3_broker.utils as wp3_api_utils
 
