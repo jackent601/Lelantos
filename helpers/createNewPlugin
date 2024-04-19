@@ -89,6 +89,10 @@ echo "  base model: ${PLUGIN_MODEL}"
 echo "  desc: ${appDescription}"
 echo "  img url: ${imgURL}"
 
+# Run base migrations
+$pythonInterpreter makemigrations lelantos_base
+$pythonInterpreter migrate
+
 # create django app
 echo "starting django app"
 $pythonInterpreter manage.py startapp $appName
