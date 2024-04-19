@@ -1,6 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.apps import apps
+from django.http import HttpResponse
+
+# For API
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.forms.models import model_to_dict
+import json
 
 import portal_auth.utils as auth_utils  
 
@@ -8,7 +15,7 @@ import portal_auth.utils as auth_utils
 from lelantos.settings import DEFAULT_LOCATION_SETTINGS 
 import folium
 from folium.plugins import MarkerCluster
-from lelantos_base.models import Session, Location, Credential_Result, Device_Instance, Model_Result_Instance
+from lelantos_base.models import Session, Location, Model_Result_Instance
 from lelantos.settings import folium_colours
 
 # Network Graphs
@@ -61,8 +68,8 @@ def getContextFromRequestAndValidate(request):
 # - - - - - - - - - - - - - - MAPS - - - - - - - - - - - - - - - - - -
 # Base Wrapper For Mapping Results (or Locations as a specific case)
 def analysis_by_model_results(request, 
-                              specificResult=False,
-                              template="analysis/analysis_by_model_results.html"):
+                              template="analysis/analysis_by_model_results.html",
+                              specificResult=False):
     """
     Reuseable function for all base models (results and locations)
     
@@ -76,15 +83,18 @@ def analysis_by_model_results(request,
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
-        return _redirect
+        return _redirect, None
     if active_session is None:
         message=messages.error(request, "No active session for user, log out and in again to create a session")
-        return redirect('home')
+        return redirect('home'), None
     
     # Display Context
     modelType, displayContext, _redirect=getContextFromRequestAndValidate(request)
     if _redirect is not None:
-        return _redirect
+        return _redirect, None
+    
+    # results (for api)
+    displayContext['allResults']=[]
     
     # Get Map
     m, mapAddObj, clustered = getMap(displayContext['clusterMarkers'])
@@ -98,7 +108,7 @@ def analysis_by_model_results(request,
             paramsReqDict, errMsg = modelType.unpackSpecificModelRequest(request)
             if errMsg is not None:
                 message=messages.error(request, errMsg)
-                return redirect('analysis_home')  
+                return redirect('analysis_home'), None
 
             # Use request params to parse QuerySet, display message, and request string
             filterQuerySet, displayMsg, reqParamString = modelType.parseSpecificModelParamRequest(active_session.user, paramsReqDict)
@@ -106,8 +116,15 @@ def analysis_by_model_results(request,
             displayContext['map_title']=displayMsg
             
             # Add location for each instance
+            _allResults=[]
             for modelEntry in filterQuerySet:
                 modelEntry.addThisInstanceToMap(mapAddObj, 0)
+                loc=modelEntry.module_session_captured.location
+                # Get API construct by coercing geo data and adding to result
+                _mod=model_to_dict(modelEntry)
+                _mod['location']={"loc_id":loc.id, "location": loc.location.wkt, "name":loc.name, "area":loc.area, "remarks":loc.remarks}
+                _allResults.append(_mod)
+            displayContext['allResults']=_allResults
         else:
             pS = request.POST
             # Get all locations of node1
@@ -127,21 +144,46 @@ def analysis_by_model_results(request,
                     coLocations.append(n2Instance.module_session_captured.location)
                     
             # add to map
+            _allResults=[]
             for loc in coLocations:
                 modelType.addModelsAtLocToMap(mapAddObj, loc, 0)
-                
+                # for api
+                _allResults.append({"node1":node1,
+                                    "node2":node2,
+                                    "loc_id":loc.id, 
+                                    "location": loc.location.wkt, 
+                                    "name":loc.name, "area":loc.area, 
+                                    "remarks":loc.remarks})
+            displayContext['allResults']=_allResults
+            
+            # for webpage
             displayContext['map_title']=f"Co-locations of '{node1}' and '{node2}'"
             displayContext['disableClustering']='disabled'     
     else:
         # Plot Markers that have model results
         colour_idx = 0
         displayContext['map_title']=f"Locations where {displayContext['model_name']}s were captured"
+        _models=[]
         for sesh in Session.objects.filter(user=active_session.user):
             # Get all locations for each session
             for loc in Location.objects.filter(session=sesh):
                 modelType.addModelsAtLocToMap(mapAddObj, loc, colour_idx)
+                
+                # Get API construct by coercing geo data and adding to result
+                if modelType._meta.model_name == Location._meta.model_name:
+                    # catch case where model is location
+                    _models.append({"loc_id":loc.id, "location": loc.location.wkt, "name":loc.name, "area":loc.area, "remarks":loc.remarks})
+                else:
+                    # otherwise add all model results at this location
+                    for mod in modelType.objects.filter(module_session_captured__location=loc):
+                        _mod=model_to_dict(mod)
+                        _mod['location']={"loc_id":loc.id, "location": loc.location.wkt, "name":loc.name, "area":loc.area, "remarks":loc.remarks}
+                        _models.append(_mod)
+                    
             # increment color to color by session
             colour_idx=(colour_idx+1)%len(folium_colours)
+        # for api only
+        displayContext['allResults']=_models
     
     # Get unique models to display in table for filter
     _, uniqueModelsDictsOnly, _ = modelType.getAllModelsFromUserAndUniqueSet(active_session.user)
@@ -157,9 +199,10 @@ def analysis_by_model_results(request,
     displayContext['results_title']=f"All {displayContext['model_name']}s"
     displayContext['map']=m._repr_html_()
     displayContext['uniqueModels']=uniqueModels
+    # displayContext['allModels']=allModels
     
     # render this model type
-    return render(request, template, displayContext)
+    return render(request, template, displayContext), displayContext 
 
 # Individual URLs to handle wrapper
 def analysis_home(request):
@@ -171,23 +214,50 @@ def analysis_home(request):
     request.GET._mutable = True
     request.GET['app_label']=Location._meta.app_label
     request.GET['model_name']=Location._meta.model_name
-    return analysis_by_model_results(request, template="analysis/analysis_home.html")
-    # return analysis_by_model_type(request, template="analysis/analysis.html", modelType=Location)
+    homeWebPage, _ = analysis_by_model_results(request, template="analysis/analysis_home.html")
+    return homeWebPage
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def analysis_home_api(request):
+    """
+    API of analysis_home results
+    """
+    request.GET._mutable = True
+    request.GET['app_label']=Location._meta.app_label
+    request.GET['model_name']=Location._meta.model_name
+    _, ctx = analysis_by_model_results(request, template="analysis/analysis_home.html")
+    return renderAPIContext(ctx, geoData=True)
 
 def analysis_of_all_a_model_results(request):
     """Displays all results relating to a model type (type found by request parameters)""" 
-    return analysis_by_model_results(request)
+    resultsWebPage, _ = analysis_by_model_results(request, specificResult=False)
+    return resultsWebPage
 
 def analysis_of_a_specific_model_result(request):
     """Displays all results relating to a specific model instance (instance found by request parameters)""" 
-    return analysis_by_model_results(request, specificResult=True)
+    resultsWebPage, _ = analysis_by_model_results(request, specificResult=True)
+    return resultsWebPage
+
+@api_view(['GET','POST'])
+@permission_classes([IsAuthenticated])
+def analysis_of_all_a_model_results_api(request):
+    """API of Displays analysis_of_all_a_model_results results""" 
+    _, ctx = analysis_by_model_results(request)
+    return renderAPIContext(ctx)
+
+@api_view(['GET','POST'])
+@permission_classes([IsAuthenticated])
+def analysis_of_a_specific_model_result_api(request):
+    """API of Displays analysis_of_a_specific_model_result results """ 
+    _, ctx = analysis_by_model_results(request, specificResult=True)
+    # dont need unique models when calling specific one
+    del ctx['uniqueModels']
+    return renderAPIContext(ctx)
      
 # - - - - - - - - - - - Network Graphs (from co-locations) - - - - - - - - - - - - - - - - - -
 # Base Wrapper For Networking Results
-def model_network(request, 
-                 template="analysis/modelNetwork.html", 
-                 minNodeSize=30, 
-                 maxNodeSize=70):
+def model_network_context(request,template="analysis/modelNetwork.html",minNodeSize=30,maxNodeSize=70):
     """
     Creates a network graph for a Django module, provided model has a module_session foreign key
     As networked by location:
@@ -207,15 +277,15 @@ def model_network(request,
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
-        return _redirect
+        return _redirect, None
     if active_session is None:
         message=messages.error(request, "No active session for user, log out and in again to create a session")
-        return redirect('home')
+        return redirect('home'), None
     
     # Display Context
     modelType, displayContext, _redirect=getContextFromRequestAndValidate(request)
     if _redirect is not None:
-        return _redirect
+        return _redirect, None
     
     # Nodes (credentials) - - - - - - - - - - - - - - - 
     # m = modelType() # get instance to access methods
@@ -262,9 +332,21 @@ def model_network(request,
     displayContext['map_sub_title']=map_sub_title
     displayContext['nodesWithEdges']=NodesWithEdgesForDisplay
     displayContext['nodesWithNoEdges']=NodesWithNoEdgesForDisplay
+    displayContext['edges']=edges
         
-    return render(request, template, displayContext) 
+    return render(request, template, displayContext), displayContext
 
+def model_network(request, template="analysis/modelNetwork.html", minNodeSize=30, maxNodeSize=70):
+    """model network rendering"""
+    networkWebPage, _ = model_network_context(request, template, minNodeSize, maxNodeSize)
+    return networkWebPage
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated]) 
+def model_network_api(request, template="analysis/modelNetwork.html", minNodeSize=30, maxNodeSize=70):
+    """model network api"""
+    _, ctx = model_network_context(request, template, minNodeSize, maxNodeSize)
+    return renderAPIContext(ctx, network=True)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # Utils
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -378,3 +460,21 @@ def getScaledNetworkGraph(nodes, edges, maxNodeSize, minNodeSize):
                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)))
     return fig
+
+# - - - - - - - - - - - - - - API Utils - - - - - - - - - - - - - - - - - -
+def renderAPIContext(ctx, network=False, geoData=False):
+    # remove fields not needed in api
+    del ctx['map']
+    del ctx['clusterMarkers']
+    if network:
+        del ctx['disableClustering']
+        del ctx['map_sub_title']
+    else:
+        del ctx['clustered']
+        del ctx['results_title']
+    del ctx['modelResultOptions']
+    del ctx['map_title']
+    # # construct api response
+    apiResponse=json.dumps(ctx)
+    return HttpResponse(apiResponse, content_type="application/json")
+    # return HttpResponse(ctx['allModels'], content_type="application/json")
