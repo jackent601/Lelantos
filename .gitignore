@@ -17,7 +17,7 @@ aircrack_ng_broker/migrations/*
 aircrack_ng_broker/migrations/__pycache__/*
 aircrack_ng_broker/scan_results/tmp/*
 
-db.sqlite3
+*.sqlite3
 
 wifiphisher_broker/__pycache__/*
 wifiphisher_broker/migrations/*
