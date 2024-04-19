@@ -90,8 +90,8 @@ echo "  desc: ${appDescription}"
 echo "  img url: ${imgURL}"
 
 # Run base migrations
-$pythonInterpreter makemigrations lelantos_base
-$pythonInterpreter migrate
+$pythonInterpreter manage.py makemigrations lelantos_base
+$pythonInterpreter manage.py migrate
 
 # create django app
 echo "starting django app"

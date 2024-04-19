@@ -290,6 +290,10 @@ def model_network_context(request,template="analysis/modelNetwork.html",minNodeS
     # Nodes (credentials) - - - - - - - - - - - - - - - 
     # m = modelType() # get instance to access methods
     nodes=modelType.getNodesFromUser(user=active_session.user)
+    if len(nodes) == 0:
+        message=messages.error(request, f"No data found for model {modelType._meta.app_label}")
+        return redirect('analysis_home'), None
+        
     displayContext['allNodes']=nodes
 
     # Edges (credential co-located)  - - - - - - - - -
@@ -464,6 +468,8 @@ def getScaledNetworkGraph(nodes, edges, maxNodeSize, minNodeSize):
 # - - - - - - - - - - - - - - API Utils - - - - - - - - - - - - - - - - - -
 def renderAPIContext(ctx, network=False, geoData=False):
     # remove fields not needed in api
+    if ctx is None:
+        return HttpResponse("{}", content_type="application/json")
     del ctx['map']
     del ctx['clusterMarkers']
     if network:
