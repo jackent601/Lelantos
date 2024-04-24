@@ -12,11 +12,12 @@ import os, datetime
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # Victim Tracking
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def read_dnsmasq_file()->([dict], bool):
+def read_dnsmasq_file():
     """
     read dnsmasq.leases file to see devices which have connected at some point
     returns victim_list, error.
     This is semi-persistent so needs cross referenced against active arp results to see if a 'live' connection
+    ->([dict], bool)
     """
     if (not os.path.isfile(cnf.DNS_MASQ_PATH)):
         return None, True
@@ -32,10 +33,11 @@ def read_dnsmasq_file()->([dict], bool):
             victim_list.append({"vic_mac":mac_address, "vic_ip":ip_address, "vic_dev_type":device_type})
     return victim_list, False
 
-def get_arp_results_for_iface(iface_filter: str)->([dict]):
+def get_arp_results_for_iface(iface_filter: str):
     """
     Checks current arp table to check which victims are actively connected (by filtering on iface).
     A victim live connected at anypoint during the session is recorded
+    ->([dict])
     """
     # Run process
     arp_results = subprocess.run(["sudo", "arp"], capture_output=True, text=True).stdout
@@ -53,12 +55,13 @@ def get_arp_results_for_iface(iface_filter: str)->([dict]):
             active_arp_entries.append({"vic_ip":elems[0], "HWtype":elems[1], "vic_mac":elems[2], "flags":elems[3],"Iface":elems[4]})
     return active_arp_entries  
 
-def get_victims_currently_connected(iface_filter: str)->([dict], bool):
+def get_victims_currently_connected(iface_filter: str):
     """
     Uses read_dnsmasq_file to get detailed info on devices which 'have' connected at some point
     Uses get_arp_results_for_iface and cross checks ip addr's to find victims 'actively' connected
     Its also 'greedy' so if dnsmasq has failed the actively connected device is still added, just without the
     device details provided by dnsmasq
+    ->([dict], bool)
     """
     # Get info
     victim_list, _err = read_dnsmasq_file()
@@ -78,11 +81,12 @@ def get_victims_currently_connected(iface_filter: str)->([dict], bool):
             active_victims.append(arp)
     return active_victims, False
 
-def parse_creds_log(cred_file, cred_type)->([dict], bool):
+def parse_creds_log(cred_file, cred_type):
     """
     read dnsmasq.leases file to see devices which have connected at some point
     returns victim_list, error.
     This is semi-persistent so needs cross referenced against active arp results to see if a 'live' connection
+    ->([dict], bool)
     """
     # Validate
     if (not os.path.isfile(cred_file)):
@@ -106,7 +110,6 @@ def parse_creds_log(cred_file, cred_type)->([dict], bool):
   
     return cred_results, False
 
-# TODO - get the capture time
 def parse_cred_entry(cred_entry, cred_type, regex_pattern):
     """ Used to extract info from each cred entry """
     cred_entry_strip=cred_entry.strip().replace("\n", "")

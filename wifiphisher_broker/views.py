@@ -240,7 +240,6 @@ def wifiphisher_captive_portal_results(request):
     wphisher_session=Wifiphisher_Captive_Portal_Session.objects.all().filter(id=session_id).first()
     victims=wphisher_session.get_victims()
     creds=wphisher_session.get_cred_results()
-    wphisher_context={}
     
     return render(request, 'wifiphisher_broker/captive_portal_results.html', 
                   {"monitor": wphisher_session, 
