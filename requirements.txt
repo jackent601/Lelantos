@@ -1,3 +1,5 @@
 Django
 Folium
+djangorestframework
+plotly
 osgeo
