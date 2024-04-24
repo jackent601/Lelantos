@@ -15,7 +15,8 @@ def about(request):
 
 def addLocation(request: HttpRequest):
     # Auth
-    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access locations")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, 
+                                        "You must be logged in to access locations")
     if _error:
         return _redirect
     if active_session is None:

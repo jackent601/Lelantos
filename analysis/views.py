@@ -122,7 +122,11 @@ def analysis_by_model_results(request,
                 loc=modelEntry.module_session_captured.location
                 # Get API construct by coercing geo data and adding to result
                 _mod=model_to_dict(modelEntry)
-                _mod['location']={"loc_id":loc.id, "location": loc.location.wkt, "name":loc.name, "area":loc.area, "remarks":loc.remarks}
+                _mod['location']={"loc_id":loc.id, 
+                                  "location": loc.location.wkt, 
+                                  "name":loc.name, 
+                                  "area":loc.area, 
+                                  "remarks":loc.remarks}
                 _allResults.append(_mod)
             displayContext['allResults']=_allResults
         else:
@@ -172,12 +176,20 @@ def analysis_by_model_results(request,
                 # Get API construct by coercing geo data and adding to result
                 if modelType._meta.model_name == Location._meta.model_name:
                     # catch case where model is location
-                    _models.append({"loc_id":loc.id, "location": loc.location.wkt, "name":loc.name, "area":loc.area, "remarks":loc.remarks})
+                    _models.append({"loc_id":loc.id, 
+                                    "location": loc.location.wkt, 
+                                    "name":loc.name, 
+                                    "area":loc.area, 
+                                    "remarks":loc.remarks})
                 else:
                     # otherwise add all model results at this location
                     for mod in modelType.objects.filter(module_session_captured__location=loc):
                         _mod=model_to_dict(mod)
-                        _mod['location']={"loc_id":loc.id, "location": loc.location.wkt, "name":loc.name, "area":loc.area, "remarks":loc.remarks}
+                        _mod['location']={"loc_id":loc.id, 
+                                          "location": loc.location.wkt, 
+                                          "name":loc.name, 
+                                          "area":loc.area, 
+                                          "remarks":loc.remarks}
                         _models.append(_mod)
                     
             # increment color to color by session
@@ -227,7 +239,7 @@ def analysis_home_api(request):
     request.GET['app_label']=Location._meta.app_label
     request.GET['model_name']=Location._meta.model_name
     _, ctx = analysis_by_model_results(request, template="analysis/analysis_home.html")
-    return renderAPIContext(ctx, geoData=True)
+    return renderAPIContext(ctx)
 
 def analysis_of_all_a_model_results(request):
     """Displays all results relating to a model type (type found by request parameters)""" 
@@ -235,7 +247,8 @@ def analysis_of_all_a_model_results(request):
     return resultsWebPage
 
 def analysis_of_a_specific_model_result(request):
-    """Displays all results relating to a specific model instance (instance found by request parameters)""" 
+    """Displays all results relating to a specific model instance 
+    (instance found by request parameters)""" 
     resultsWebPage, _ = analysis_by_model_results(request, specificResult=True)
     return resultsWebPage
 
@@ -466,7 +479,7 @@ def getScaledNetworkGraph(nodes, edges, maxNodeSize, minNodeSize):
     return fig
 
 # - - - - - - - - - - - - - - API Utils - - - - - - - - - - - - - - - - - -
-def renderAPIContext(ctx, network=False, geoData=False):
+def renderAPIContext(ctx, network=False):
     # remove fields not needed in api
     if ctx is None:
         return HttpResponse("{}", content_type="application/json")

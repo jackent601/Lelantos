@@ -26,15 +26,16 @@ def login_user(request: HttpRequest):
         message=messages.error(request, "Invalid login credentials.")
         return redirect('login')
     
+    # Log user in & add home-screen message
     login(request, _user)
-    new_session = auth_utils.start_new_session_for_user(request, _user)
-    started_at=new_session.start_time.strftime("%m/%d/%Y - %H:%M:%S")
-    
+    _ = auth_utils.start_new_session_for_user(request, _user)
     message=messages.success(request, "login succesful, please set session location")
     
+    # redirect based on user
     if _user.username==MOCK_DATA_USERNAME:
         return redirect('home')
-    return redirect('setLocation')
+    else:
+        return redirect('setLocation')
 
 
 
@@ -48,20 +49,19 @@ def logout_user(request: HttpRequest):
         # Gracefully shutdown and move to inactive (not deleted to maintain audit log)
         for session in qs:
             # Shutdown all possile module processes running
-            restSessions=Module_Session.objects.all().filter(session=session, active=True)
-            for rs in restSessions:
-                ended=rs.end_module_session()
+            moduleSessions=Module_Session.objects.all().filter(session=session, active=True)
+            for s in moduleSessions:
+                ended=s.end_module_session()
                 if ended:
-                    message=messages.success(request, f"Stopped wp3 server (pid: {rs.pid})")
+                    message=messages.success(request, f"Stopped module (pid: {s.pid})")
                 else:
-                    message=messages.error(request, f"Failed to stop wp3 server (pid: {rs.pid}), process may have had faulty start, or need manual shutdown")
+                    message=messages.error(request, 
+                                           f"Failed to stop module (pid: {s.pid}), process may have had faulty start, or need manual shutdown")
             
             # End session
-            print(session)
             session.active=False
             session.end_time=timezone.now()
             session.save()
-            # TODO - shutdown wp3 jobs once made
         logout(request)
         timestamp=timezone.now().strftime("%m/%d/%Y - %H:%M:%S")
         message=messages.success(request, f"logged out, {timestamp}")

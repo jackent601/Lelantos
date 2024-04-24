@@ -94,7 +94,6 @@ def wifiphisher_captive_portal_launch(request):
         return redirect('captive_portal_monitor')
     
     # Unpack post req
-    print(request.POST)
     interface=str(request.POST['interface'])
     scenario=str(request.POST['scenario'])
     valid_scenarios=wph_utils.get_scenarios()
@@ -173,8 +172,6 @@ def wifiphisher_captive_portal_monitor(request):
     wphisher_session = wphisher_sessions[0]
     
     # Update connected victims
-    # victims=wphisher_session.get_and_update_victims()
-    # wphisher_session.update_credentials()
     victims, creds = wphisher_session.update()
     return render(request, 'wifiphisher_broker/captive_portal_monitor.html', 
                   {"monitor": wphisher_session, 

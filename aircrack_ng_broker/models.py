@@ -3,6 +3,10 @@ from lelantos_base.models import Module_Session
 import aircrack_ng_broker.config as cfg
 
 class Wifi_Scan(Module_Session):
+    """
+    Module_Session wrapper for wifi-scans, declaring interface to use for scan
+    and scan duration
+    """
     module_name=cfg.MODULE_NAME
     duration_s = models.PositiveIntegerField()
     interface = models.CharField(max_length=200)

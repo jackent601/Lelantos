@@ -4,6 +4,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from aircrack_ng_broker.models import *
+import aircrack_ng_broker.config as cfg
 import portal_auth.utils as auth_utils
 
 import glob, os, datetime, time, subprocess
@@ -18,7 +19,8 @@ MINIMUM_SCAN_TIME_s=15
 # HOME
 def ng_wifi_scan_home(request):
     # Auth
-    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, 
+                                                            "You must be logged in to access wifi scans")
     if _error:
         return _redirect
     if active_session is None:
@@ -153,20 +155,12 @@ def get_wifi_devices():
     # Parse output
     return parse_airmon_ng_console_output(p.stdout)
 
-def parse_airmon_ng_console_output(consoleOutput: str, skip=3, up_to_minus=2, separator="\t")->[dict]:
+def parse_airmon_ng_console_output(consoleOutput: str, skip=3, up_to_minus=2, separator="\t"):
     """
-    At time of writing (14/11/2023) airmon-ng output took the following schema:
-    
-    ''
-    HEADERS
-    ''
-    [<Entries>]
-    ''
-    ''
-    each <Entries> was PHY, Interface, '', Driver, Chipset, TAB separated when in normal mode
-    the '' entry isnt present in monitor mode. This is handled
-    
-    This can be used to parse the console output
+    This can be used to parse the console output from airmon-ng, which has the following schema:
+    '''HEADERS \n  [<Entries>]'''
+    each <Entries> has PHY, Interface, '', Driver, Chipset, TAB separated when in normal mode
+    the '' entry isnt present in monitor mode. This is handled accordingly
     """
     result=[]
     entries = consoleOutput.split("\n")[skip:-up_to_minus]
@@ -197,7 +191,7 @@ def parse_airmon_ng_console_output(consoleOutput: str, skip=3, up_to_minus=2, se
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - Scanning
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def ng_wifi_scan(scanObj: Wifi_Scan)->(bool, str, Wifi_Scan):
+def ng_wifi_scan(scanObj: Wifi_Scan):
     """
     Uses airmon/airodump to scan wifi.
     Returns error (bool), error message (str), scan
@@ -219,8 +213,10 @@ def ng_wifi_scan(scanObj: Wifi_Scan)->(bool, str, Wifi_Scan):
     monitor_interface=interface_name+"mon" if interface_name[-3:] != "mon" else interface_name
     
     # Run scan, need to use popen as command wont exit
-    scanProc=subprocess.Popen(["sudo", "airodump-ng", monitor_interface, "-w", filePathPrefix, "--output-format", "csv"], close_fds=True)
+    scanProc=subprocess.Popen(["sudo", "airodump-ng", monitor_interface, "-w", filePathPrefix, "--output-format", "csv"], 
+                              close_fds=True)
     time.sleep(scan_time)
+    # End scan once duration reached
     scanProc.terminate()
     scanProc.kill()
     
@@ -230,7 +226,7 @@ def ng_wifi_scan(scanObj: Wifi_Scan)->(bool, str, Wifi_Scan):
     scanObj.save()
     
     # Reset monitor
-    monitor_off = subprocess.run(["sudo", "airmon-ng", "stop", monitor_interface])
+    subprocess.run(["sudo", "airmon-ng", "stop", monitor_interface])
     
     # Read & Save results
     resultFilePath = [f for f in glob.glob(filePathPattern)]
@@ -238,28 +234,25 @@ def ng_wifi_scan(scanObj: Wifi_Scan)->(bool, str, Wifi_Scan):
     resultFilePath=resultFilePath[0]
     with open(resultFilePath, "r") as resFile:
         results=resFile.read()
-        
     # Save scan results
     saveAiroDumpResults(results, scanObj)
-    
     # Clean tmp file
     os.remove(resultFilePath)
-    
     return False, None
 
 def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
     """
     To save memory/time not using pandas instead reading and parsing file string directly
     Router Schema
-        BSSID, First time seen, Last time seen, channel, Speed, Privacy, Cipher, Authentication, Power, # beacons, # IV, LAN IP, ID-length, ESSID, Key
+        BSSID, First time seen, Last time seen, channel, Speed, Privacy, 
+        Cipher, Authentication, Power, # beacons, # IV, LAN IP, ID-length, ESSID, Key
 
     Station schema
         Station MAC, First time seen, Last time seen, Power, # packets, BSSID, Probed ESSIDs
     """
     # Get Routers vs Stations
-    STATION_HEADERS_STRING='Station MAC, First time seen, Last time seen, Power, # packets, BSSID, Probed ESSIDs'
-    if STATION_HEADERS_STRING in results:
-        beaconEntries, stationEntries=results.split(STATION_HEADERS_STRING)
+    if cfg.STATION_HEADERS_STRING in results:
+        beaconEntries, stationEntries=results.split(cfg.STATION_HEADERS_STRING)
     else:
         beaconEntries=results
         stationEntries=None
@@ -288,9 +281,6 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                     key=elements[14],
                 )
                 beaconResult.save()
-            else:
-                # TODO - LOG!!
-                pass
         
     # Save Stations
     if stationEntries is not None:
@@ -309,8 +299,5 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                         probed_essids=elements[6:]
                     )
                     stationResult.save()
-                else:
-                    # TODO - LOG!!
-                    pass
 
 
