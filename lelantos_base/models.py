@@ -12,8 +12,6 @@ from django.contrib.gis.db import models as gisModels
 from lelantos.settings import CONVERT_COORDS_FOR_MAP, folium_colours # see convert_3857_to_4326
 import folium
 
-# from folium.plugins import MarkerCluster
-# from lelantos_base.models import Session, Location, Credential_Result, Device_Instance
 from osgeo import ogr, osr
 
 MAX_SESSION_ID=9223372036854775807
@@ -339,34 +337,6 @@ class Model_Result_Instance(models.Model):
         return relatedModels
         
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    
-# It's an 'instance' because mac addresses, and ip constantly change. 
-# Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
-# And begin wider assoications
-class Device_Instance(Model_Result_Instance):
-    # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
-    mac_addr=models.CharField(max_length=200)
-    ip=models.CharField(max_length=200)
-    private_ip=models.CharField(max_length=200)
-    type=models.CharField(max_length=200)
-    first_seen=models.CharField(max_length=200)
-    
-    # All that needs defined to use the inherited netowrk plotting functions
-    # are the model's unique identifiers which determine 'nodes'
-    uniqueIdentifiers=('mac_addr', 'type')
-
-class Credential_Result(Model_Result_Instance):
-    # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
-    device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
-    ip=models.CharField(max_length=200)
-    type=models.CharField(max_length=200)
-    username=models.CharField(max_length=200)
-    password=models.CharField(max_length=200)
-    capture_time=models.CharField(max_length=200)
-    
-    # All that needs defined to use the inherited netowrk plotting functions
-    # are the model's unique identifiers which determine 'nodes'
-    uniqueIdentifiers=('username', 'password')
 
 # Uncomment to demo IMSI capturing mock data
 class Demo_IMSI_Result(Model_Result_Instance):

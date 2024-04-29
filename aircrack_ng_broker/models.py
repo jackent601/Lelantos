@@ -1,5 +1,5 @@
 from django.db import models
-from lelantos_base.models import Module_Session, Device_Instance, Model_Result_Instance
+from lelantos_base.models import Module_Session, Model_Result_Instance
 import aircrack_ng_broker.config as cfg
 
 # Track wifi scanning session

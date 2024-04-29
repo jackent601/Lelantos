@@ -1,26 +1,38 @@
 import subprocess
 import time
 from django.db import models
-from lelantos_base.models import Session, Module_Session, Credential_Result, Device_Instance
-from wifiphisher_broker.utils import read_dnsmasq_file, get_victims_currently_connected, parse_creds_log
+from lelantos_base.models import Session, Module_Session, Model_Result_Instance
+from wifiphisher_broker.utils import get_victims_currently_connected, parse_creds_log
 import wifiphisher_broker.config as cfg
 
-# # It's an 'instance' because mac addresses, and ip constantly change. 
-# # Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
-# # And begin wider assoications
-# class Device_Instance(models.Model):
-#     module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
-#     mac_addr=models.CharField(max_length=200)
-#     ip=models.CharField(max_length=200)
-#     private_ip=models.CharField(max_length=200)
-#     type=models.CharField(max_length=200)
-#     first_seen=models.CharField(max_length=200)
+# It's an 'instance' because mac addresses, and ip constantly change. 
+# Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
+# And begin wider assoications
+class Device_Instance(Model_Result_Instance):
+    # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+    mac_addr=models.CharField(max_length=200)
+    ip=models.CharField(max_length=200)
+    private_ip=models.CharField(max_length=200)
+    type=models.CharField(max_length=200)
+    first_seen=models.CharField(max_length=200)
+    
+    # All that needs defined to use the inherited netowrk plotting functions
+    # are the model's unique identifiers which determine 'nodes'
+    uniqueIdentifiers=('mac_addr', 'type')
 
-# # to be moved into 'basic'
-# # TODO - review ng in the manner
+class Credential_Result(Model_Result_Instance):
+    # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+    device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
+    ip=models.CharField(max_length=200)
+    type=models.CharField(max_length=200)
+    username=models.CharField(max_length=200)
+    password=models.CharField(max_length=200)
+    capture_time=models.CharField(max_length=200)
+    
+    # All that needs defined to use the inherited netowrk plotting functions
+    # are the model's unique identifiers which determine 'nodes'
+    uniqueIdentifiers=('username', 'password')
 
-
-# TODO - delete dnsmasq once session ended - sometimes automatic?
 class Wifiphisher_Captive_Portal_Session(Module_Session):
     module_name=cfg.MODULE_NAME
     interface = models.CharField(max_length=200)
@@ -121,10 +133,6 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         victims = self.get_and_update_victims()
         creds = self.get_and_update_cred_results()
         return victims, creds
-            
-        
-    
-    
     
 def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive_Portal_Session]):
     """
@@ -136,12 +144,3 @@ def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive
     else:
         return False, None
                 
-# Not currently needed as base classes are populated (by design) but useful if extending module in future
-# class Wifiphisher_Credential_Result(models.Model):
-#     wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
-#     credential=models.ForeignKey(Credential_Result, on_delete=models.CASCADE)
-    
-# class Wifiphisher_Device_Instance(models.Model):
-#     wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
-#     device_instance=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
-
