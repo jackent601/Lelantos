@@ -31,6 +31,7 @@ analysis/__pycache__/*
 analysis/migrations/__pycache__/*
 analysis/migrations/*
 
+_archive/*
 dbWithGeo.sqlite3.old
 
 # Separate git repo
