@@ -31,6 +31,8 @@ analysis/__pycache__/*
 analysis/migrations/__pycache__/*
 analysis/migrations/*
 
+dbWithGeo.sqlite3.old
+
 # Separate git repo
 ConvertGraphToXMLForDrawIO*
 ConvertGraphToXMLForDrawIO/*
