@@ -143,7 +143,7 @@ class Model_Result_Instance(models.Model):
     
     @classmethod
     def get_subclasses(cls):
-        content_types = ContentType.objects.filter(app_label=cls._meta.app_label)
+        content_types = ContentType.objects.all()#filter(app_label=cls._meta.app_label)
         models = [ct.model_class() for ct in content_types]
         return [model for model in models
                 if (model is not None and
@@ -218,7 +218,7 @@ class Model_Result_Instance(models.Model):
         
         # validate
         if len(paramDictCleaned) == 0:
-            None, f"invalid cred parameters, none of {self.uniqueIdentifiers} specified"
+            return None, f"invalid cred parameters, none of {self.uniqueIdentifiers} specified"
         return paramDictCleaned, None 
         
     @classmethod 
@@ -319,6 +319,25 @@ class Model_Result_Instance(models.Model):
                             if toNode not in nodesWithEdges:
                                 nodesWithEdges.append(toNode)
         return edges, nodesWithEdges
+        
+    # -- associated models -- (Future feature)
+    def getAssociatedFKModels(self):
+        allModelFields=self._meta.get_fields(include_parents=False)
+        
+        # Get all foreign key Field classes (that arent module_session_captured)
+        relatedModels=[]
+        for f in allModelFields:
+            # Check foreign key
+            if f.get_internal_type() == "ForeignKey" and f.name != "module_session_captured":
+                if f.many_to_one:
+                    # Check child of results class (otherwise cant be plotted)
+                    
+                    # Get object relating to foreign key
+                    obj=f.related_model.objects.filter(pk=f.value_from_object(self))
+                    relatedModels.append(obj)
+        
+        return relatedModels
+        
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
 # It's an 'instance' because mac addresses, and ip constantly change. 

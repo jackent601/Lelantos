@@ -1,8 +1,10 @@
 lelantos/__pycache__/*
-
 lelantos_base/__pycache__/*
 lelantos_base/migrations/__pycache__/*
 lelantos_base/migrations/*
+
+lelantos_base/management/__pycache__/*
+lelantos_base/management/commands/__pycache__/*
 
 wp3_broker/__pycache__/*
 wp3_broker/migrations/__pycache__/*

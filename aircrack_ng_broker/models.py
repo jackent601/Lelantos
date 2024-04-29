@@ -1,15 +1,17 @@
 from django.db import models
-from lelantos_base.models import Module_Session
+from lelantos_base.models import Module_Session, Device_Instance, Model_Result_Instance
 import aircrack_ng_broker.config as cfg
 
+# Track wifi scanning session
 class Wifi_Scan(Module_Session):
     module_name=cfg.MODULE_NAME
     duration_s = models.PositiveIntegerField()
     interface = models.CharField(max_length=200)
-    
-# TODO - Move to basic
-class Wifi_Scan_Beacon_Result(models.Model):
-    wifi_scan=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+
+# Beacon results from scans
+# Inherits from Model_Result_Instance to plot results
+class Wifi_Scan_Beacon_Result(Model_Result_Instance):
+    module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
     bssid=models.CharField(max_length=200)
     first_time_seen=models.CharField(max_length=200)
     last_time_seen=models.CharField(max_length=200)
@@ -25,9 +27,11 @@ class Wifi_Scan_Beacon_Result(models.Model):
     id_len=models.IntegerField()
     essid=models.CharField(max_length=200)
     key=models.CharField(max_length=200)
+    uniqueIdentifiers=('bssid', 'essid')
     
-class Wifi_Scan_Station_Result(models.Model):
-    wifi_scan = models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+    
+class Wifi_Scan_Station_Result(Model_Result_Instance):
+    module_session_captured = models.ForeignKey(Module_Session, on_delete=models.CASCADE)
     station_mac=models.CharField(max_length=200)
     first_time_seen=models.CharField(max_length=200)
     last_time_seen=models.CharField(max_length=200)
@@ -35,4 +39,5 @@ class Wifi_Scan_Station_Result(models.Model):
     num_packets=models.IntegerField()
     bssid=models.CharField(max_length=200)
     probed_essids=models.CharField(max_length=200)
-    
+    uniqueIdentifiers=('station_mac', 'probed_essids')
+        

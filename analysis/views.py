@@ -125,6 +125,12 @@ def analysis_by_model_results(request,
                 _mod['location']={"loc_id":loc.id, "location": loc.location.wkt, "name":loc.name, "area":loc.area, "remarks":loc.remarks}
                 _allResults.append(_mod)
             displayContext['allResults']=_allResults
+            
+            # Specific Result so get associated models (future deature)
+            # associatedFKModels=[]
+            # for modelEntry in filterQuerySet:
+            #     associatedFKModels.append(modelEntry.getAssociatedFKModels())
+            # displayContext['associatedFKModels']=associatedFKModels
         else:
             pS = request.POST
             # Get all locations of node1

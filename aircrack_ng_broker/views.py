@@ -135,8 +135,8 @@ def ng_wifi_run_scan(request):
 def util_show_scan_results(request, scan_id):
     
     # Get results from django db
-    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(wifi_scan__id=scan_id)
-    stationResults=Wifi_Scan_Station_Result.objects.all().filter(wifi_scan__id=scan_id)
+    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(module_session_captured__id=scan_id)
+    stationResults=Wifi_Scan_Station_Result.objects.all().filter(module_session_captured__id=scan_id)
     
     return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"beaconResults":beaconResults, "stationResults": stationResults})
 
@@ -249,11 +249,13 @@ def ng_wifi_scan(scanObj: Wifi_Scan)->(bool, str, Wifi_Scan):
 
 def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
     """
-    To save memory/time not using pandas instead reading and parsing file string directly
-    Router Schema
-        BSSID, First time seen, Last time seen, channel, Speed, Privacy, Cipher, Authentication, Power, # beacons, # IV, LAN IP, ID-length, ESSID, Key
+    Saves results from scsan log, accordingly to following schemas...
+    Router Schema:
+        BSSID, First time seen, Last time seen, channel, 
+        Speed, Privacy, Cipher, Authentication, Power, 
+        # beacons, # IV, LAN IP, ID-length, ESSID, Key
 
-    Station schema
+    Station schema:
         Station MAC, First time seen, Last time seen, Power, # packets, BSSID, Probed ESSIDs
     """
     # Get Routers vs Stations
@@ -270,7 +272,7 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
             elements=[elem.lstrip() for elem in beaconEntry.split(",")]
             if len(elements)>=15:
                 beaconResult=Wifi_Scan_Beacon_Result(
-                    wifi_scan=scanObj,
+                    module_session_captured=scanObj,
                     bssid=elements[0],
                     first_time_seen=elements[1],
                     last_time_seen=elements[2],
@@ -288,9 +290,6 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                     key=elements[14],
                 )
                 beaconResult.save()
-            else:
-                # TODO - LOG!!
-                pass
         
     # Save Stations
     if stationEntries is not None:
@@ -309,8 +308,5 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                         probed_essids=elements[6:]
                     )
                     stationResult.save()
-                else:
-                    # TODO - LOG!!
-                    pass
 
 
