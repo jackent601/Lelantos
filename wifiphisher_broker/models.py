@@ -5,22 +5,6 @@ from lelantos_base.models import Session, Module_Session, Credential_Result, Dev
 from wifiphisher_broker.utils import read_dnsmasq_file, get_victims_currently_connected, parse_creds_log
 import wifiphisher_broker.config as cfg
 
-# # It's an 'instance' because mac addresses, and ip constantly change. 
-# # Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
-# # And begin wider assoications
-# class Device_Instance(models.Model):
-#     module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
-#     mac_addr=models.CharField(max_length=200)
-#     ip=models.CharField(max_length=200)
-#     private_ip=models.CharField(max_length=200)
-#     type=models.CharField(max_length=200)
-#     first_seen=models.CharField(max_length=200)
-
-# # to be moved into 'basic'
-# # TODO - review ng in the manner
-
-
-# TODO - delete dnsmasq once session ended - sometimes automatic?
 class Wifiphisher_Captive_Portal_Session(Module_Session):
     module_name=cfg.MODULE_NAME
     interface = models.CharField(max_length=200)
@@ -33,10 +17,10 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
     
     def update_victims(self):
         """
-        Compares victims that have connected (linux) to all recorded victims (django) for the session and updates django appropriately
+        Compares victims that have connected (linux) to all recorded victims (django)
+        for the session and updates django appropriately
         for the session
         """
-        # dns_victim_list, error = read_dnsmasq_file()
         dns_victim_list, error = get_victims_currently_connected(self.interface)
         if error:
             return
@@ -75,12 +59,12 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         return True
     
     def update_credentials(self):
-        """ Read credential file to see if any new hits, links credentials to devices of the session """
+        """ Read credential file to see if any new hits, 
+        links credentials to devices of the session """
         cred_entries, _err = parse_creds_log(self.cred_file_path, self.cred_type)
         if cred_entries is None or _err:
             return
         for cred in cred_entries:
-            # print(f'updating creds: {cred}')
             # Check if cred already present
             vicCred = Credential_Result.objects.filter(module_session_captured=self,
                                                        ip=cred["vic_ip"],
@@ -88,7 +72,6 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
                                                        username=cred["username"],
                                                        password=cred["password"])
             if len(vicCred) == 0:
-                # print("updating creds: new entry ")
                 # Not present, create
                 newVicCred = Credential_Result(module_session_captured=self,
                                                ip=cred["vic_ip"],

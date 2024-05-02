@@ -57,9 +57,12 @@ def get_arp_results_for_iface(iface_filter: str):
 
 def get_victims_currently_connected(iface_filter: str):
     """
-    Uses read_dnsmasq_file to get detailed info on devices which 'have' connected at some point
-    Uses get_arp_results_for_iface and cross checks ip addr's to find victims 'actively' connected
-    Its also 'greedy' so if dnsmasq has failed the actively connected device is still added, just without the
+    Uses read_dnsmasq_file to get detailed info on devices 
+    which 'have' connected at some point
+    Uses get_arp_results_for_iface and cross checks 
+    ip addr's to find victims 'actively' connected
+    Its also 'greedy' so if dnsmasq has failed the actively 
+    connected device is still added, just without the
     device details provided by dnsmasq
     ->([dict], bool)
     """
@@ -83,10 +86,8 @@ def get_victims_currently_connected(iface_filter: str):
 
 def parse_creds_log(cred_file, cred_type):
     """
-    read dnsmasq.leases file to see devices which have connected at some point
-    returns victim_list, error.
-    This is semi-persistent so needs cross referenced against active arp results to see if a 'live' connection
-    ->([dict], bool)
+    reads credential log file and parses each result
+    using regex pattern (defined in config) based on result type
     """
     # Validate
     if (not os.path.isfile(cred_file)):
@@ -111,7 +112,7 @@ def parse_creds_log(cred_file, cred_type):
     return cred_results, False
 
 def parse_cred_entry(cred_entry, cred_type, regex_pattern):
-    """ Used to extract info from each cred entry """
+    """ Extract info from each cred entry based on regex pattern """
     cred_entry_strip=cred_entry.strip().replace("\n", "")
     details = regex_pattern.findall(cred_entry_strip)
     

@@ -1,0 +1,2 @@
+#!/bin/bash
+./helpers/createNewPlugin myNewPlugin Demo_IMSI_Result -d "descripton is here" -i lelantos_base/imgs/pluginPlaceholder.png
