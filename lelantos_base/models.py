@@ -339,24 +339,12 @@ class Model_Result_Instance(models.Model):
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 # Uncomment to demo IMSI capturing mock data
-class Demo_IMSI_Result(Model_Result_Instance):
-    sdr_settings=models.CharField(max_length=200)
-    imsi=models.CharField(max_length=200)
-    uniqueIdentifiers=('imsi',)
+# class Demo_IMSI_Result(Model_Result_Instance):
+#     sdr_settings=models.CharField(max_length=200)
+#     imsi=models.CharField(max_length=200)
+#     uniqueIdentifiers=('imsi',)
 
-
-# // Deprecated - useful if wifipumpkin improve kali distro
-class Wp3_Authentication_Token(models.Model):
-    # TODO - move session to Wp3RestSession
-    session = models.OneToOneField(Session, on_delete=models.CASCADE)
-    token = models.CharField(max_length=2000)
-    issued_at = models.DateTimeField()
-    
-    def __str__(self):
-        partial_token=self.token[0:5]
-        time_formated=self.issued_at.strftime(TIME_FORMAT)
-        return f"token ({partial_token}*...*) for session {self.session.session_id}, issued at {time_formated}"
-
+# Not currently implemented but could be used for audit logs
 class User_Action(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     placeholder = models.CharField(max_length=2000)
@@ -365,7 +353,7 @@ class User_Action(models.Model):
     def __str__(self):
         time_formated=self.time_stamp.strftime(TIME_FORMAT)
         return f"{self.placeholder} at {time_formated}"
-    
+        
 # Utils
 def get_new_valid_session_id()->int:
     activeIds=[s.session_id for s in Session.objects.all()]

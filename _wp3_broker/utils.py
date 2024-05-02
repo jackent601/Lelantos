@@ -4,8 +4,9 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 
-from lelantos_base.models import Session, Wp3_Authentication_Token, Module_Session
-from wp3_broker.wp3_api_config import WP3_SERVER_START_WAIT_TIME
+from _wp3_broker.models import Wp3_Authentication_Token
+from lelantos_base.models import Session, Module_Session
+from _wp3_broker.wp3_api_config import WP3_SERVER_START_WAIT_TIME
 
 import socket
 import base64 
