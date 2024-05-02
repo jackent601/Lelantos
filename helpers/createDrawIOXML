@@ -10,7 +10,7 @@ fi
 $pythonInterpreter manage.py graph_models -a --json -o myapp_models.json
 
 # Convert to xml
-$pythonInterpreter ./ConvertGraphToXMLForDrawIO/convertGraphModelJsonToDrawIO.py --graph_models_json ./myapp_models.json --attemptFKRelations --nameMappingsJsonPath ./helpers/drawioModelMappings.json --output ./drawioXML.xml
+$pythonInterpreter ./ConvertGraphToXMLForDrawIO/convertGraphModelJsonToDrawIO.py --graph_models_json ./myapp_models.json --attemptFKRelations --nameMappingsJsonPath ./helpers/drawioModelMappings.json --output ./lelantosXML.xml
 
 # rm json
 rm myapp_models.json

@@ -166,9 +166,9 @@ class Model_Result_Instance(models.Model):
         """
         User to pass in context to template parsing Gets all model instances associated with user
             Finds unique set within these models on uniqueIdentifiers
-        reutnrs QuerySet, UniqueModelDicts
+        returns QuerySet, UniqueModelDicts
         """
-        # allCredInstances = self.__class__.objects.filter(module_session_captured__session__user=user)
+        # Get all instances for user
         allCredInstances = self.objects.filter(module_session_captured__session__user=user)
         # get unique set
         uniqueCreds = allCredInstances.values(*self.uniqueIdentifiers).distinct()
@@ -185,7 +185,6 @@ class Model_Result_Instance(models.Model):
         with colour index from foliums allowed colors
         """
         modelsString=""
-        # for model in self.__class__.objects.filter(module_session_captured__location=loc):
         for model in self.objects.filter(module_session_captured__location=loc):
             modelsString += f"{model.getMsgFromModel()}\n"
         # Add marker if not nil
@@ -328,22 +327,22 @@ class Model_Result_Instance(models.Model):
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
 # It's an 'instance' because mac addresses, and ip constantly change. 
-# Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
-# And begin wider assoications
+# By storing it in memory data analytic techniques can be used 
+# to interrogate device patterns And begin wider assoications
 class Device_Instance(Model_Result_Instance):
-    # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
     mac_addr=models.CharField(max_length=200)
     ip=models.CharField(max_length=200)
     private_ip=models.CharField(max_length=200)
     type=models.CharField(max_length=200)
     first_seen=models.CharField(max_length=200)
     
-    # All that needs defined to use the inherited netowrk plotting functions
-    # are the model's unique identifiers which determine 'nodes'
+    # All that needs defined to use the inherited netowrk 
+    # plotting functions are the model's unique identifiers 
+    # which determine 'nodes'
     uniqueIdentifiers=('mac_addr', 'type')
 
+# Credential result relating to a device instance
 class Credential_Result(Model_Result_Instance):
-    # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
     device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
     ip=models.CharField(max_length=200)
     type=models.CharField(max_length=200)

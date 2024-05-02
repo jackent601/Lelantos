@@ -1,1 +1,0 @@
-sqlite3 dbWithGeo.sqlite3 'SELECT * FROM lelantos_base_session' -header -markdown

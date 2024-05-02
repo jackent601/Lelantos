@@ -1,4 +1,14 @@
 #!/bin/bash
+
+addMockData="false"
+if [[ "$#" == 1 ]]; then
+    if [[ "$1" == "--addMockData" ]]; then
+        addMockData="true"
+    else
+        echo "only optional parameter is --addMockData"
+    fi
+fi
+
 # move old database
 mv dbWithGeo.sqlite3 dbWithGeo.sqlite3.old
 
@@ -24,3 +34,8 @@ $pythonInterpreter manage.py makemigrations
 $pythonInterpreter manage.py shell -c "import django;django.db.connection.cursor().execute('SELECT InitSpatialMetaData(1);')";
 # migrate
 $pythonInterpreter manage.py migrate
+
+# optional mock data
+if [[ "$addMockData" == "true" ]];then
+    $pythonInterpreter manage.py createMockData
+fi

@@ -1,0 +1,83 @@
+#!/bin/bash
+_usage() {
+cat << EOF
+  ${0} MODEL [OPTIONS]
+
+  Command line too to view data-base entries for a specific django model.
+  MODEL can be a shortcut or specific the fully qualified model table name in
+  database
+
+  database default is 'dbWithGeo.sqlite3' but can be override 
+
+  MODEL Shortcuts
+  session               lelantos_base_session
+  module_session        lelantos_base_module_session
+  location              lelantos_base_location
+
+  -db, --database       Database path to query
+
+
+EOF
+}
+
+if [[ "$#" -lt 1 ]]; then
+    _usage
+    exit 1
+fi
+
+# Count all of the args passed into the script and continue looping while we have args.
+db=dbWithGeo.sqlite3
+position=0
+while [[ "${#}" -gt 0 ]]; do
+case "${1}" in
+    -h|--help|help)
+    _usage
+    exit 0
+    ;;
+    -db|--database)
+    dbOverride="${2:-}"
+    [[ -z "${dbOverride}" ]] && printf "%s must have a value\n\n" "${1}" >&2 && _usage >&2 && exit 1
+    shift 2
+    ;;
+    # We've handled all of our flags, now it's onto anything else (the positional args).
+    *)
+    # Determine which position we're at (this value defaults to 0 earlier in the script).
+    case "${position}" in
+        0)
+        model="${1}"
+        position=1
+        shift
+        ;;
+        1)
+        printf "Unknown argument: %s\n\n" "${1}" >&2
+        _usage >&2
+        exit 1
+        ;;
+    esac
+    ;;
+esac
+done
+
+# Handle shortcuts
+if [[ "$model" == "session" ]]; then
+    model=lelantos_base_session
+fi
+if [[ "$model" == "module_session" ]]; then
+    model=lelantos_base_module_session
+fi
+if [[ "$model" == "session" ]]; then
+    model=lelantos_base_session
+fi
+if [[ "$model" == "credential" ]]; then
+    # model=wifiphisher_broker_credential_result
+    model=lelantos_base_credential_result
+fi
+if [[ "$model" == "device" ]]; then
+    model=wifiphisher_broker_device_instance
+fi
+
+# echo "fetching $model"
+echo "fetching wifiphisher_credential_result"
+statement="SELECT * FROM ${model}"
+echo "sqlite3 $db $statement -header -markdown"
+sqlite3 $db "$statement" -header -markdown
