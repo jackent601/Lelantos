@@ -203,7 +203,7 @@ def ng_wifi_scan(scanObj: Wifi_Scan):
     # time stamp & filename
     ts=datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     filenamePrefix=f'{ts}_{interface_name}'
-    filePathPrefix=os.path.join(settings.AIRCRACK_SCAN_RESULTS_PATH, filenamePrefix)
+    filePathPrefix=os.path.join(cfg.AIRCRACK_SCAN_RESULTS_PATH, filenamePrefix)
     filePathPattern=f'{filePathPrefix}*'
     
     # First start interface monitoring, no effect if alreay in monitor mode

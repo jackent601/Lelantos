@@ -17,8 +17,4 @@ urlpatterns = [
 
 # Make log dir if not present
 if not os.path.isdir(WIFIPHISHER_LOG_DIR):
-    # TODO - logger
     print(f'Creating temp directory at {WIFIPHISHER_LOG_DIR} for scan result files')
-    os.makedirs(WIFIPHISHER_LOG_DIR)
-else:
-    print(f'Saving temp wifiphisher logs to {WIFIPHISHER_LOG_DIR}')
