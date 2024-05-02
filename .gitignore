@@ -1,36 +1,45 @@
+# Base Project
 lelantos/__pycache__/*
 
+# Base App
 lelantos_base/__pycache__/*
 lelantos_base/migrations/__pycache__/*
 lelantos_base/migrations/*
+lelantos_base/management/commands/__pycache__/
 
+# Wifipumpkin (deprecated)
 wp3_broker/__pycache__/*
 wp3_broker/migrations/__pycache__/*
 
+# utils
 utils/__pycache__/*
 
+# Auth module
 portal_auth/__pycache__/*
 portal_auth/migrations/__pycache__/*
 
+# Wifi-sniffing (aircrack-ng)
 aircrack_ng_broker/__pycache__/*
 aircrack_ng_broker/migrations/*
 aircrack_ng_broker/migrations/__pycache__/*
 aircrack_ng_broker/scan_results/tmp/*
 
+# database
 *.sqlite3
 
+# Captive portals (wifiphisher)
 wifiphisher_broker/__pycache__/*
 wifiphisher_broker/migrations/*
 wifiphisher_broker/migrations/__pycache__/*
 wifiphisher_broker/logs/temp/*
 wifiphisher_broker/logs/*
 
+# Analysis
 analysis/__pycache__/*
 analysis/migrations/__pycache__/*
 analysis/migrations/*
 
 # Separate git repo
-ConvertGraphToXMLForDrawIO*
-ConvertGraphToXMLForDrawIO/*
-
-ConvertGraphToXMLForDrawIO/**/*
+# ConvertGraphToXMLForDrawIO*
+# ConvertGraphToXMLForDrawIO/*
+# ConvertGraphToXMLForDrawIO/**/*
