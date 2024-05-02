@@ -12,14 +12,11 @@ from django.contrib.gis.db import models as gisModels
 from lelantos.settings import CONVERT_COORDS_FOR_MAP, folium_colours # see convert_3857_to_4326
 import folium
 
-# from folium.plugins import MarkerCluster
-# from lelantos_base.models import Session, Location, Credential_Result, Device_Instance
 from osgeo import ogr, osr
 
 MAX_SESSION_ID=9223372036854775807
 TIME_FORMAT="%m/%d/%Y-%H:%M:%S"
-
-# General session for a user which can contain multiple locations & module sessions
+# TODO - dubplicate session stuff could be better streamlined
 class Session(models.Model):
     session_id = models.PositiveIntegerField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -52,16 +49,13 @@ class Location(gisModels.Model):
     
     def convert_3857_to_4326 (self, coords_3857):
         """
-        There is a bug (slightly documented online) in using spatiaLite on a kali OS.
-        OSMWidget, and db saving coordinates are coerced into srid: 3857, rather than the 
-        alledged django default srid: 4326. After a lot of research it does not seem to 
-        be fixable natively
+        There is a bug (slightly documented online) in using spatiaLite, OSMWidget, and db saving in that coordinates
+        are coerced into srid: 3857, rather than the alledged django default srid: 4326. After a lot of research
+        for the above combintation it does not seem to be fixable natively!!
         
         Instead using osgeo a manual conversion can be done to convert to 4326 for map visualisation  
         
-        Adapted from 
-        https://stackoverflow.com/questions/69084910/why-does-print-show-srid-3847-in-geodjango/69211700
-        #69211700
+        Adapted from https://stackoverflow.com/questions/69084910/why-does-print-show-srid-3847-in-geodjango/69211700#69211700
         """
         # create Geometry Object
         point = ogr.Geometry(ogr.wkbPoint)
@@ -95,8 +89,7 @@ class Location(gisModels.Model):
             icon=folium.Icon(color=folium_colours[colour_idx], icon='user', prefix=prefix)
         ).add_to(mapAddObj)
         
-    # Some functions to satisfy the model-result interface allowing 
-    # convenient function re-use in template rendering
+    # Some functions to satisfy the model-result interface allowing convenient function re-use in template rendering
     @classmethod
     def addModelsAtLocToMap(self, mapAddObj, loc, colour_idx):
         """To satisfy analysis interface for convenient plotting integration"""
@@ -134,7 +127,7 @@ class Module_Session(models.Model):
     
 # Meta Class to use for analysis, mapping and networking
 # Interface design in this manner also any model which inherits this model class
-# to be visualised and analysed directly, and accessile from API endpoints
+# to be visualised and aalysed directly
 class Model_Result_Instance(models.Model):
     class Meta:
         abstract=True
@@ -148,8 +141,7 @@ class Model_Result_Instance(models.Model):
     
     @classmethod
     def get_subclasses(cls):
-        """Finds all subclasses of this model for automatic UI population"""
-        content_types = ContentType.objects.filter(app_label=cls._meta.app_label)
+        content_types = ContentType.objects.all()#filter(app_label=cls._meta.app_label)
         models = [ct.model_class() for ct in content_types]
         return [model for model in models
                 if (model is not None and
@@ -158,33 +150,22 @@ class Model_Result_Instance(models.Model):
     
     @classmethod
     def getModelUniqueIdentifierPatternString(self):
-        """Help string for the pattern that defines a unique 'result' """
         return "__".join(self.uniqueIdentifiers)
         
-    @classmethod
-    def getAllModelsFromUserAndUniqueSet(self, user):
-        """
-        User to pass in context to template parsing Gets all model instances associated with user
-            Finds unique set within these models on uniqueIdentifiers
-        returns QuerySet, UniqueModelDicts
-        """
-        # Get all instances for user
-        allCredInstances = self.objects.filter(module_session_captured__session__user=user)
-        # get unique set
-        uniqueCreds = allCredInstances.values(*self.uniqueIdentifiers).distinct()
-        return allCredInstances, uniqueCreds, self.uniqueIdentifiers
-        
-    # = = = = = = = = = = = = = = = = Methods for analysis = = = = = = = = = = = = = = = = = = = = =
-    # - - - - - - - - - - - - - - - - Plotting Models on Map - - - - - - - - - - - - - - - - - - - -
+    # Methods for analysis = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # - - - - - - - - - - - - - - - - Plotting Models on Map - - - - - - - - - - - - - - - - - - - - -
+    # Node String Conversions from model instance - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # In order to create network diagrams model 'instances' (location-specific) need converted into 
+    # 'unique' sets i.e. nodes (location-agnostic) in order to connect 'uniqie' entries based on location
+    # these functions identify 'nodes' based on models uniqueIdentifiers  
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # - - - - - - - - - - - - - Mapping All Models - - - - - - - - - - - - - - - - - - - - -
     @classmethod
     def addModelsAtLocToMap(self, mapAddObj, loc, colour_idx):
         """
-        For a location adds any model instances captured here to map 
-        with colour index from foliums allowed colors
+        For a location adds any model instances captured here to map with colour index from foliums allowed colors
         """
         modelsString=""
+        # for model in self.__class__.objects.filter(module_session_captured__location=loc):
         for model in self.objects.filter(module_session_captured__location=loc):
             modelsString += f"{model.getMsgFromModel()}\n"
         # Add marker if not nil
@@ -192,7 +173,6 @@ class Model_Result_Instance(models.Model):
             loc.addLocToMap(mapAddObj, colour_idx, popupStr=modelsString)
         return modelsString
     
-    # - - - - - - - - - - - - - Mapping single model - - - - - - - - - - - - - - - - - - - - -
     def addThisInstanceToMap(self, mapAddObj, colour_idx):
         """
         Adds this specific model instance to map with colour index from foliums allowed colors
@@ -205,10 +185,23 @@ class Model_Result_Instance(models.Model):
         """Message to display on pop-up at a location, can be overwritten, defaults to nodes value"""
         return f"({self.getNodeString()})"
     
-    # - - - - - - - - - Handingly a specific result request - - - - - - - - - - - - - - - - -
+    @classmethod
+    def getAllModelsFromUserAndUniqueSet(self, user):
+        """
+        User to pass in context to template parsing
+            Gets all model instances associated with user
+            Finds unique set within these models on uniqueIdentifiers
+            reutnrs QuerySet, UniqueModelDicts
+        """
+        # allCredInstances = self.__class__.objects.filter(module_session_captured__session__user=user)
+        allCredInstances = self.objects.filter(module_session_captured__session__user=user)
+        # get unique set
+        uniqueCreds = allCredInstances.values(*self.uniqueIdentifiers).distinct()
+        return allCredInstances, uniqueCreds, self.uniqueIdentifiers
+    
     @classmethod    
     def unpackSpecificModelRequest(self, request):
-        "Unpacks request parameters to display a specific model instance on map"
+        "Unpacks parameters to vdisplay a specific model instance on map"
         paramDict={}
         paramDictCleaned={}
         # unpack request
@@ -223,7 +216,7 @@ class Model_Result_Instance(models.Model):
         
         # validate
         if len(paramDictCleaned) == 0:
-            None, f"invalid req parameters, none of {self.uniqueIdentifiers} specified"
+            return None, f"invalid cred parameters, none of {self.uniqueIdentifiers} specified"
         return paramDictCleaned, None 
         
     @classmethod 
@@ -253,13 +246,6 @@ class Model_Result_Instance(models.Model):
     # 'unique' sets i.e. nodes (location-agnostic) in order to connect 'uniqie' entries based on location
     # these functions identify 'nodes' based on models uniqueIdentifiers  
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def getNodeString(self):
-        """
-        Takes this model instance returns the unique node string for that model
-        node string will <uniqueID1Value>:<uniqueID2Value>:...
-        """
-        return self.getNodeIdentifierFromDict(self.__dict__)
-
     @classmethod 
     def getNodeIdentifierFromDict(self, instanceDict):
         """
@@ -269,6 +255,13 @@ class Model_Result_Instance(models.Model):
         uniqueElems=[instanceDict[uniqueID] for uniqueID in self.uniqueIdentifiers]
         return "__".join(uniqueElems)
     
+    def getNodeString(self):
+        """
+        Takes this model instance returns the unique node string for that model
+        node string will <uniqueID1Value>:<uniqueID2Value>:...
+        """
+        return self.getNodeIdentifierFromDict(self.__dict__)
+
     @classmethod 
     def getModelDictFromNodeString(self, nodeString):
         """Gets device dictionary from node identifier"""
@@ -324,35 +317,26 @@ class Model_Result_Instance(models.Model):
                             if toNode not in nodesWithEdges:
                                 nodesWithEdges.append(toNode)
         return edges, nodesWithEdges
+        
+    # -- associated models -- (Future feature)
+    def getAssociatedFKModels(self):
+        allModelFields=self._meta.get_fields(include_parents=False)
+        
+        # Get all foreign key Field classes (that arent module_session_captured)
+        relatedModels=[]
+        for f in allModelFields:
+            # Check foreign key
+            if f.get_internal_type() == "ForeignKey" and f.name != "module_session_captured":
+                if f.many_to_one:
+                    # Check child of results class (otherwise cant be plotted)
+                    
+                    # Get object relating to foreign key
+                    obj=f.related_model.objects.filter(pk=f.value_from_object(self))
+                    relatedModels.append(obj)
+        
+        return relatedModels
+        
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    
-# It's an 'instance' because mac addresses, and ip constantly change. 
-# By storing it in memory data analytic techniques can be used 
-# to interrogate device patterns And begin wider assoications
-class Device_Instance(Model_Result_Instance):
-    mac_addr=models.CharField(max_length=200)
-    ip=models.CharField(max_length=200)
-    private_ip=models.CharField(max_length=200)
-    type=models.CharField(max_length=200)
-    first_seen=models.CharField(max_length=200)
-    
-    # All that needs defined to use the inherited netowrk 
-    # plotting functions are the model's unique identifiers 
-    # which determine 'nodes'
-    uniqueIdentifiers=('mac_addr', 'type')
-
-# Credential result relating to a device instance
-class Credential_Result(Model_Result_Instance):
-    device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
-    ip=models.CharField(max_length=200)
-    type=models.CharField(max_length=200)
-    username=models.CharField(max_length=200)
-    password=models.CharField(max_length=200)
-    capture_time=models.CharField(max_length=200)
-    
-    # All that needs defined to use the inherited netowrk plotting functions
-    # are the model's unique identifiers which determine 'nodes'
-    uniqueIdentifiers=('username', 'password')
 
 # Uncomment to demo IMSI capturing mock data
 class Demo_IMSI_Result(Model_Result_Instance):

@@ -1,9 +1,37 @@
 import subprocess
 import time
 from django.db import models
-from lelantos_base.models import Session, Module_Session, Credential_Result, Device_Instance
-from wifiphisher_broker.utils import read_dnsmasq_file, get_victims_currently_connected, parse_creds_log
+from lelantos_base.models import Session, Module_Session, Model_Result_Instance
+from wifiphisher_broker.utils import get_victims_currently_connected, parse_creds_log
 import wifiphisher_broker.config as cfg
+
+# It's an 'instance' because mac addresses, and ip constantly change. 
+# Regardless by storing it in memory data analytic techniques can be used to interrogate device patterns
+# And begin wider assoications
+class Device_Instance(Model_Result_Instance):
+    # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+    mac_addr=models.CharField(max_length=200)
+    ip=models.CharField(max_length=200)
+    private_ip=models.CharField(max_length=200)
+    type=models.CharField(max_length=200)
+    first_seen=models.CharField(max_length=200)
+    
+    # All that needs defined to use the inherited netowrk plotting functions
+    # are the model's unique identifiers which determine 'nodes'
+    uniqueIdentifiers=('mac_addr', 'type')
+
+class Credential_Result(Model_Result_Instance):
+    # module_session_captured=models.ForeignKey(Module_Session, on_delete=models.CASCADE)
+    device=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
+    ip=models.CharField(max_length=200)
+    type=models.CharField(max_length=200)
+    username=models.CharField(max_length=200)
+    password=models.CharField(max_length=200)
+    capture_time=models.CharField(max_length=200)
+    
+    # All that needs defined to use the inherited netowrk plotting functions
+    # are the model's unique identifiers which determine 'nodes'
+    uniqueIdentifiers=('username', 'password')
 
 class Wifiphisher_Captive_Portal_Session(Module_Session):
     module_name=cfg.MODULE_NAME
@@ -17,10 +45,10 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
     
     def update_victims(self):
         """
-        Compares victims that have connected (linux) to all recorded victims (django)
-        for the session and updates django appropriately
+        Compares victims that have connected (linux) to all recorded victims (django) for the session and updates django appropriately
         for the session
         """
+        # dns_victim_list, error = read_dnsmasq_file()
         dns_victim_list, error = get_victims_currently_connected(self.interface)
         if error:
             return
@@ -59,12 +87,12 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         return True
     
     def update_credentials(self):
-        """ Read credential file to see if any new hits, 
-        links credentials to devices of the session """
+        """ Read credential file to see if any new hits, links credentials to devices of the session """
         cred_entries, _err = parse_creds_log(self.cred_file_path, self.cred_type)
         if cred_entries is None or _err:
             return
         for cred in cred_entries:
+            # print(f'updating creds: {cred}')
             # Check if cred already present
             vicCred = Credential_Result.objects.filter(module_session_captured=self,
                                                        ip=cred["vic_ip"],
@@ -72,6 +100,7 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
                                                        username=cred["username"],
                                                        password=cred["password"])
             if len(vicCred) == 0:
+                # print("updating creds: new entry ")
                 # Not present, create
                 newVicCred = Credential_Result(module_session_captured=self,
                                                ip=cred["vic_ip"],
@@ -85,6 +114,10 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
                     # print(f"found device ({vicDev}) associated with credentials")
                     newVicCred.device = vicDev
                 newVicCred.save()
+                # TODO - logging!
+            #     print(f'New cred found and saved: {newVicCred}')
+            # else:
+            #     print("updating creds: already present")
                 
     def get_cred_results(self)->[Credential_Result]:
         """Returns all credential results that have used on AP during session"""
@@ -100,10 +133,6 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         victims = self.get_and_update_victims()
         creds = self.get_and_update_cred_results()
         return victims, creds
-            
-        
-    
-    
     
 def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive_Portal_Session]):
     """
@@ -115,12 +144,3 @@ def get_current_wphisher_sessions(session: Session)->(bool, [Wifiphisher_Captive
     else:
         return False, None
                 
-# Not currently needed as base classes are populated (by design) but useful if extending module in future
-# class Wifiphisher_Credential_Result(models.Model):
-#     wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
-#     credential=models.ForeignKey(Credential_Result, on_delete=models.CASCADE)
-    
-# class Wifiphisher_Device_Instance(models.Model):
-#     wpisher_session=models.ForeignKey(Wifiphisher_Captive_Portal_Session, on_delete=models.CASCADE)
-#     device_instance=models.ForeignKey(Device_Instance, on_delete=models.CASCADE)
-

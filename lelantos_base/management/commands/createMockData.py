@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
-from lelantos_base.models import Session, Location, Module_Session, Device_Instance, Credential_Result, get_new_valid_session_id
-from wifiphisher_broker.models import Wifiphisher_Captive_Portal_Session
+from lelantos_base.models import Session, Location, Module_Session, get_new_valid_session_id
+from wifiphisher_broker.models import Wifiphisher_Captive_Portal_Session, Device_Instance, Credential_Result
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand, CommandError
 

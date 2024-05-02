@@ -69,8 +69,7 @@ if [[ "$model" == "session" ]]; then
     model=lelantos_base_session
 fi
 if [[ "$model" == "credential" ]]; then
-    # model=wifiphisher_broker_credential_result
-    model=lelantos_base_credential_result
+    model=wifiphisher_broker_credential_result
 fi
 if [[ "$model" == "device" ]]; then
     model=wifiphisher_broker_device_instance
