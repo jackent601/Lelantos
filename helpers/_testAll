@@ -1,0 +1,9 @@
+#!/bin/bash
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+echo "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = "
+echo "= = = = = = = = = = lelantos_base Models  = = = = = = = = = = = = = = "
+$pythonInterpreter manage.py test -v 0 lelantos_base.tests.testModels

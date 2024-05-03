@@ -7,10 +7,11 @@ lelantos_base/migrations/__pycache__/*
 lelantos_base/migrations/*
 lelantos_base/management/commands/__pycache__/
 lelantos_base/management/__pycache__/*
+lelantos_base/tests/__pycache__/*
 
 # Wifipumpkin (deprecated)
-wp3_broker/__pycache__/*
-wp3_broker/migrations/__pycache__/*
+_wp3_broker/__pycache__/*
+_wp3_broker/migrations/__pycache__/*
 
 # utils
 utils/__pycache__/*

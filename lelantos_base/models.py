@@ -145,7 +145,8 @@ class Model_Result_Instance(models.Model):
         return [model for model in models
                 if (model is not None and
                     issubclass(model, cls) and
-                    model is not cls)]
+                    model is not cls and
+                    model is not AbstractModelResultsTestClass)]
     
     @classmethod
     def getModelUniqueIdentifierPatternString(self):
@@ -315,26 +316,7 @@ class Model_Result_Instance(models.Model):
                                 nodesWithEdges.append(fromNode)
                             if toNode not in nodesWithEdges:
                                 nodesWithEdges.append(toNode)
-        return edges, nodesWithEdges
-        
-    # -- associated models -- (Future feature)
-    def getAssociatedFKModels(self):
-        allModelFields=self._meta.get_fields(include_parents=False)
-        
-        # Get all foreign key Field classes (that arent module_session_captured)
-        relatedModels=[]
-        for f in allModelFields:
-            # Check foreign key
-            if f.get_internal_type() == "ForeignKey" and f.name != "module_session_captured":
-                if f.many_to_one:
-                    # Check child of results class (otherwise cant be plotted)
-                    
-                    # Get object relating to foreign key
-                    obj=f.related_model.objects.filter(pk=f.value_from_object(self))
-                    relatedModels.append(obj)
-        
-        return relatedModels
-        
+        return edges, nodesWithEdges       
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 # Uncomment to demo IMSI capturing mock data
@@ -342,6 +324,13 @@ class Model_Result_Instance(models.Model):
 #     sdr_settings=models.CharField(max_length=200)
 #     imsi=models.CharField(max_length=200)
 #     uniqueIdentifiers=('imsi',)
+
+# Child of Model_Result_Instance for testing only
+class AbstractModelResultsTestClass(Model_Result_Instance):
+    name=models.CharField(max_length=100)
+    item=models.CharField(max_length=100)
+    aux=models.CharField(max_length=100)
+    uniqueIdentifiers=('item','name')
 
 # Not currently implemented but could be used for audit logs
 class User_Action(models.Model):
