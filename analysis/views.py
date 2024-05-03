@@ -112,7 +112,6 @@ def analysis_by_model_results(request,
 
             # Use request params to parse QuerySet, display message, and request string
             filterQuerySet, displayMsg, reqParamString = modelType.parseSpecificModelParamRequest(active_session.user, paramsReqDict)
-            displayContext['modelParamReq']+=f"&{reqParamString}"
             displayContext['map_title']=displayMsg
             
             # Add location for each instance
@@ -311,7 +310,10 @@ def model_network_context(request,template="analysis/modelNetwork.html",minNodeS
 
     # Edges (credential co-located)  - - - - - - - - -
     edges, nodesWithEdges = modelType.getNodeEdgesByLocationFromUser(user=active_session.user)
-              
+    if len(edges) == 0:
+        message=messages.error(request, f"No networks for model {modelType._meta.app_label}")
+        return redirect('analysis_home'), None
+               
     # Remove nodes with no connections
     nodesWithNoEdges=[]
     for c in nodes:
@@ -438,8 +440,13 @@ def getScaledNetworkGraph(nodes, edges, maxNodeSize, minNodeSize):
     # prep node sizes by scaling as appropriate
     maxAdjacency=max(node_adjacencies)
     minAdjacency=min(node_adjacencies)
-    relativeAdjacencies=[(a-minAdjacency)/(maxAdjacency-minAdjacency) for a in node_adjacencies]
-    scaledSize=[minNodeSize+(maxNodeSize-minNodeSize)*relA for relA in relativeAdjacencies]
+    # catch div zero error
+    if maxAdjacency == minAdjacency:
+        relativeAdjacencies=node_adjacencies
+        scaledSize=[(maxNodeSize-minNodeSize)/2 for _ in relativeAdjacencies]
+    else:
+        relativeAdjacencies=[(a-minAdjacency)/(maxAdjacency-minAdjacency) for a in node_adjacencies]
+        scaledSize=[minNodeSize+(maxNodeSize-minNodeSize)*relA for relA in relativeAdjacencies]
         
     # format nodes
     node_trace = go.Scatter(

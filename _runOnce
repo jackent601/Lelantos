@@ -6,7 +6,7 @@ if [[ "$?" -ne 0 ]];then
 fi
 
 # Prime database
-./helpers/_resetDB
+./helpers/resetDB
 
 # create guest user (skips if already created)
 ./helpers/_createGuestUser

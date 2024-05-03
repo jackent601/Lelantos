@@ -1,0 +1,26 @@
+{% extends "lelantos_base/base.html" %}
+{% block content %}
+    {% load static %}
+
+    {% if user.is_authenticated %}
+        <div class="card" style="width: 38rem;">
+            <img class="card-img-top" src="{% static 'lelantos_base/imgs/scan/scanDragon.png' %}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">Scan </h5>
+                
+                <button class="btn btn-primary" type="button" disabled>
+                <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+                Scanning...
+                </button>
+
+                <script>
+                    setTimeout(
+                    function() {
+                        window.location.replace("{% url 'ng_wifi_scan_stop' %}?scan_id={{ scan_id }}");
+                    }, {{ refresh_after }});
+                </script>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+

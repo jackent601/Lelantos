@@ -151,9 +151,7 @@ def parse_cred_entry(cred_entry, cred_type, regex_pattern):
 def get_scenarios()->[str]:
     """
     Lists scenarios available for wifiphisher captive portal. Declared in wifiphisher config
-    TODO - Perhaps could be acertained from the tool itself?
     """
-    # TODO - implement properaly
     return cnf.PHISHING_SCENARIOS.keys()
     
 def get_new_log_paths(interface, scenario, essid):

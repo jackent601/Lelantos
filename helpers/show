@@ -13,6 +13,8 @@ cat << EOF
   session               lelantos_base_session
   module_session        lelantos_base_module_session
   location              lelantos_base_location
+  credential            wifiphisher_broker_credential_result
+  device                wifiphisher_broker_device_instance
 
   -db, --database       Database path to query
 

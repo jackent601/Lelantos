@@ -1,12 +1,15 @@
 from django.db import models
 from lelantos_base.models import Module_Session, Model_Result_Instance
 import aircrack_ng_broker.config as cfg
+import subprocess
 
 # Track wifi scanning session
 class Wifi_Scan(Module_Session):
     module_name=cfg.MODULE_NAME
     duration_s = models.PositiveIntegerField()
     interface = models.CharField(max_length=200)
+    monitor_interface = models.CharField(max_length=200)
+    filePathPattern = models.CharField(max_length=200)
 
 # Beacon results from scans
 # Inherits from Model_Result_Instance to plot results

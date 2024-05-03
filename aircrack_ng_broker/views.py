@@ -12,6 +12,10 @@ import glob, os, datetime, time, subprocess
 DEFAULT_SCAN_TIME_s=30
 MINIMUM_SCAN_TIME_s=15
 
+# Map to track scans to terminate
+# from aircrack_ng_broker.config import SCAN_MAP
+SCAN_MAP={}
+
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # VIEWS
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
@@ -129,7 +133,34 @@ def ng_wifi_run_scan(request):
         message=messages.error(request, errorMsg)
         return redirect('ng_wifi_scan_home')
     
-    return util_show_scan_results(request, wifi_scan.id)
+    return render(request, 'aircrack_ng_broker/wifi_scan_loading.html', {'scan_id':wifi_scan.id, 'refresh_after': 1000*wifi_scan.duration_s})
+    
+    # return util_show_scan_results(request, wifi_scan.id)
+
+def ng_wifi_scan_stop(request):
+    # Auth
+    active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
+    if _error:
+        return _redirect
+    if active_session is None:
+        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        return redirect('home')
+    
+    # Scan
+    scan_id=request.GET.get('scan_id', None)
+    if scan_id is None:
+        message=messages.error(request, "Must select a scan to stop, no scan_id in request params")
+        return redirect('ng_wifi_previous_scans')
+    wfscan = Wifi_Scan.objects.filter(id=scan_id).first()
+    # global SCAN_MAP
+    print("printing scan map")
+    for key, item in SCAN_MAP.items():
+        print(key)
+        print(item)
+    proc = SCAN_MAP[wfscan]
+    # return redirect('home')
+    return scan_loading_finished(request, wfscan, proc)
+    
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - view utils
@@ -137,12 +168,10 @@ def ng_wifi_run_scan(request):
 def util_show_scan_results(request, scan_id):
     
     # Get results from django db
-    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(wifi_scan__id=scan_id)
-    stationResults=Wifi_Scan_Station_Result.objects.all().filter(wifi_scan__id=scan_id)
+    beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(module_session_captured__id=scan_id)
+    stationResults=Wifi_Scan_Station_Result.objects.all().filter(module_session_captured__id=scan_id)
     
     return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"beaconResults":beaconResults, "stationResults": stationResults})
-
-
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - Devices
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
@@ -212,10 +241,23 @@ def ng_wifi_scan(scanObj: Wifi_Scan):
         return True, f"Could not set {interface_name} to monitor"
     monitor_interface=interface_name+"mon" if interface_name[-3:] != "mon" else interface_name
     
+    scanObj.monitor_interface=monitor_interface
+    scanObj.filePathPattern=filePathPattern
+    scanObj.save()
+    
     # Run scan, need to use popen as command wont exit
     scanProc=subprocess.Popen(["sudo", "airodump-ng", monitor_interface, "-w", filePathPrefix, "--output-format", "csv"], 
                               close_fds=True)
-    time.sleep(scan_time)
+    
+    # Add to map for tracking
+    # global SCAN_MAP
+    SCAN_MAP[scanObj]=scanProc
+    print(f"added id: {scanObj} to map") 
+    return False, None
+
+def scan_loading_finished(request, scanObj, scanProc):
+    
+    # time.sleep(scan_time)
     # End scan once duration reached
     scanProc.terminate()
     scanProc.kill()
@@ -226,11 +268,11 @@ def ng_wifi_scan(scanObj: Wifi_Scan):
     scanObj.save()
     
     # Reset monitor
-    subprocess.run(["sudo", "airmon-ng", "stop", monitor_interface])
+    subprocess.run(["sudo", "airmon-ng", "stop", scanObj.monitor_interface])
     
     # Read & Save results
-    resultFilePath = [f for f in glob.glob(filePathPattern)]
-    assert len(resultFilePath)==1, f"tmp dir must not have been cleaned, multiple scan files found matching pattern: {filePathPattern}"
+    resultFilePath = [f for f in glob.glob(scanObj.filePathPattern)]
+    assert len(resultFilePath)==1, f"tmp dir must not have been cleaned, multiple scan files found matching pattern: {scanObj.filePathPattern}"
     resultFilePath=resultFilePath[0]
     with open(resultFilePath, "r") as resFile:
         results=resFile.read()
@@ -238,7 +280,7 @@ def ng_wifi_scan(scanObj: Wifi_Scan):
     saveAiroDumpResults(results, scanObj)
     # Clean tmp file
     os.remove(resultFilePath)
-    return False, None
+    return util_show_scan_results(request, scanObj.id)
 
 def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
     """
@@ -263,7 +305,7 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
             elements=[elem.lstrip() for elem in beaconEntry.split(",")]
             if len(elements)>=15:
                 beaconResult=Wifi_Scan_Beacon_Result(
-                    wifi_scan=scanObj,
+                    module_session_captured=scanObj,
                     bssid=elements[0],
                     first_time_seen=elements[1],
                     last_time_seen=elements[2],
@@ -289,7 +331,7 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                 elements=[elem.lstrip() for elem in stationEntry.split(",")]
                 if len(elements)>=7:
                     stationResult=Wifi_Scan_Station_Result(
-                        wifi_scan=scanObj,
+                        module_session_captured=scanObj,
                         station_mac=elements[0],
                         first_time_seen=elements[1],
                         last_time_seen=elements[2],
