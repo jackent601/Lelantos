@@ -16,7 +16,6 @@ from osgeo import ogr, osr
 
 MAX_SESSION_ID=9223372036854775807
 TIME_FORMAT="%m/%d/%Y-%H:%M:%S"
-# TODO - dubplicate session stuff could be better streamlined
 class Session(models.Model):
     session_id = models.PositiveIntegerField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

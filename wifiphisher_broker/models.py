@@ -114,10 +114,6 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
                     # print(f"found device ({vicDev}) associated with credentials")
                     newVicCred.device = vicDev
                 newVicCred.save()
-                # TODO - logging!
-            #     print(f'New cred found and saved: {newVicCred}')
-            # else:
-            #     print("updating creds: already present")
                 
     def get_cred_results(self)->[Credential_Result]:
         """Returns all credential results that have used on AP during session"""

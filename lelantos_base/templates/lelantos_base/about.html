@@ -1,63 +1,79 @@
 {% extends "lelantos_base/base.html" %}
 {% block content %}
     {% load static %}
-    {% if user.is_authenticated %}
-        <div class="row">
-                <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'lelantos_base/imgs/location/location.png' %}" alt="Card image cap">
-                    <div class="col text-center">
-                        <div class="card-body">
-                            <h5 class="card-title">Location</h5>
-                            <p class="card-text">Update Session Location</p>
-                            <a href="{% url 'setLocation' %}" class="btn btn-primary">See Map</a>
-                            <p></p>
-                            <a href="{% url 'previous_locations' %}" class="btn btn-primary">Previous Locations</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'lelantos_base/imgs/scan/scanDragon.png' %}" alt="Card image cap">
-                    <div class="col text-center">
-                        <div class="card-body">
-                            <h5 class="card-title">Wifi Scan</h5>
-                            <p class="card-text">Aircrack-ng wifi monitoring</p>
-                            <a href="{% url 'ng_wifi_scan_home' %}" class="btn btn-primary">Scan</a>
-                            <p></p>
-                            <a href="{% url 'ng_wifi_previous_scans' %}" class="btn btn-primary">Previous Scans</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'lelantos_base/imgs/captive_portal/dragon2.png' %}" alt="Card image cap">
-                    <div class="col text-center">
-                        <div class="card-body">
-                            <h5 class="card-title">Captive Portal</h5>
-                            <p class="card-text">Wifiphisher Captive Portal</p>
-                            <a href="{% url 'captive_portal_home' %}" class="btn btn-primary">Captive Portal</a>
-                            <p></p>
-                            <a href="{% url 'captive_portal_previous_captures' %}" class="btn btn-primary">Previous Captures</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card" style="width: 18rem;">
-                    <img class="card-img-top" src="{% static 'lelantos_base/imgs/analysis/analysis.png' %}" alt="Card image cap">
-                    <div class="col text-center">
-                        <div class="card-body">
-                            <h5 class="card-title">Analysis</h5>
-                            <p class="card-text">Study data from this session and more</p>
-                            <a href="{% url 'analysis_home' %}" class="btn btn-primary">Investigate</a>
-                        </div>
-                    </div>
-                </div>
+    <div class="row"  style="width: 46rem;">
+        <div class="bg-image p-5 text-center shadow-1-strong rounded mb-5 text-white" 
+            style="background-image: url('{% static 'lelantos_base/imgs/lelantos-edit.jpg' %}');
+                    height: 100vh; width: 100vw">
+                <h1 class="mb-3 h2">Lelantos</h1>
+
+                <p>
+                    One of the younger Titanes - god of moving unseen and a hunter's skill at stalking prey
+                </p>
+
+                <br>
+
+                <p>
+                    This is a multi-purpose, extensible, platform for executing, orchestrating and analysing
+                    digital-footprint exploits
+                </p>
+
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+
+                <h2 class="mb-3 h3">Motivation</h2>
+
+                <p>
+                    As society becomes more and more reliant on online, vastly interconnected, networks it becomes impossible to 
+                    navigate the modern world without leave behind a trail of digital data points - the digital footprint
+                </p>
+                <br>
+                <p>
+                    This, increasingly information-rich, digital footprint can be used as a threat surface by bad actors 
+                    for nefarious purposes including harvesting sensitive information, conducting offensive open-source intelligence (OSINT) 
+                    operations, and gaining starting points for further exploits such as social engineering attacks 
+                </p>
+                <br>
+                <p>
+                    This projects aims to raise awareness of the risks presented through digital 
+                    footprint exploitation using (and extending) readily available technologies 
+                    to demonstrate the risk online users are exposed to, often without their knowledge.
+                </p>
         </div>
-    {% else %}
-        <div class="card text-center" style="width: 18rem;">
-            <img class="card-img-top" src="{% static 'lelantos_base/imgs/home/pumpkinDragonLogo.png' %}" alt="Card image cap">
-            <div class="card-body">
-                <p class="card-text">Login to start the fun!</p>
-                <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
-            </div>
+    </div>
+
+    <div class="row"  style="width: 46rem;">
+        <div class="bg-image p-5 text-center shadow-1-strong rounded mb-5 text-white" 
+            style="background-image: url('{% static 'lelantos_base/imgs/lelantos-edit.jpg' %}');
+                    height: 100vh; width: 100vw">
+                <h1 class="mb-3 h2">useful Links</h1>
+
+                <p>
+                    Platform tutorial
+                </p>
+
+                <p>
+                    wifiphisher
+                </p>
+
+                <p>
+                    aircrack-ng
+                </p>
+
+                <p>
+                    OSINT
+                </p>
         </div>
-    {% endif %}
+    </div>
+
+               
+
+       
 {% endblock %}
 

@@ -78,7 +78,6 @@ def ng_wifi_show_scan_results(request):
     return util_show_scan_results(request, scan_id)
 
 # RUN SCAN
-# TODO - loading swirl screen, checking for results (active=false)
 def ng_wifi_run_scan(request):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
@@ -109,7 +108,6 @@ def ng_wifi_run_scan(request):
         message=messages.error(request, "Please select an interface to start scan")
         return ng_wifi_scan_home(request)
     interface = request.POST["wifiInterfaceSelect"]
-    # TODO move to scan model
     if 'scanTime' not in request.POST:
         # default 30 seconds
         scanTime=DEFAULT_SCAN_TIME_s
