@@ -48,7 +48,6 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         Compares victims that have connected (linux) to all recorded victims (django) for the session and updates django appropriately
         for the session
         """
-        # dns_victim_list, error = read_dnsmasq_file()
         dns_victim_list, error = get_victims_currently_connected(self.interface)
         if error:
             return

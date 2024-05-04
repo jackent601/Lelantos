@@ -1,46 +1,50 @@
 import subprocess
-import oscrypto
 from django.contrib import messages
-
-# Models
-from lelantos_base.models import Session
-
 import wifiphisher_broker.config as cnf
 
 import os, datetime
-
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # Victim Tracking
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def read_dnsmasq_file():
+def read_dnsmasq_file(dns_masq_path=cnf.DNS_MASQ_PATH, 
+                      dns_sep=cnf.DNS_SEP, 
+                      macIndex=cnf.DNS_MAC_INDEX, 
+                      ipIndex=cnf.DNS_IP_INDEX,
+                      typeIndex=cnf.DNS_TYPE_INDEX):
     """
     read dnsmasq.leases file to see devices which have connected at some point
     returns victim_list, error.
     This is semi-persistent so needs cross referenced against active arp results to see if a 'live' connection
     ->([dict], bool)
+    dns structure is configurable to be used on different OS/distro
     """
-    if (not os.path.isfile(cnf.DNS_MASQ_PATH)):
+    if (not os.path.isfile(dns_masq_path)):
         return None, True
     victim_list=[]
-    with open(cnf.DNS_MASQ_PATH, "r") as dnsmasq_leases:
+    with open(dns_masq_path, "r") as dnsmasq_leases:
         for line in dnsmasq_leases:
-            line = line.split()
+            line = line.split(dns_sep)
             if not line:
                 return None, True
-            mac_address = line[1].strip()
-            ip_address = line[2].strip()
-            device_type = line[3].strip()
+            if len(line)-1 < max([macIndex, ipIndex, typeIndex]):
+                # index out of bounds
+                return None, True
+            mac_address = line[macIndex].strip()
+            ip_address = line[ipIndex].strip()
+            device_type = line[typeIndex].strip()
             victim_list.append({"vic_mac":mac_address, "vic_ip":ip_address, "vic_dev_type":device_type})
     return victim_list, False
 
-def get_arp_results_for_iface(iface_filter: str):
+def get_arp_results_for_iface(iface_filter, arp_results=None):
     """
     Checks current arp table to check which victims are actively connected (by filtering on iface).
     A victim live connected at anypoint during the session is recorded
     ->([dict])
+    output is from arp which is consistent across OS/distro so doesnt need configured like dnsmasque
     """
     # Run process
-    arp_results = subprocess.run(["sudo", "arp"], capture_output=True, text=True).stdout
+    if arp_results is None:
+        arp_results = subprocess.run(["sudo", "arp"], capture_output=True, text=True).stdout
     arp_entries = arp_results.split("\n")
     # first line is header
     active_arp_entries = []
@@ -55,7 +59,7 @@ def get_arp_results_for_iface(iface_filter: str):
             active_arp_entries.append({"vic_ip":elems[0], "HWtype":elems[1], "vic_mac":elems[2], "flags":elems[3],"Iface":elems[4]})
     return active_arp_entries  
 
-def get_victims_currently_connected(iface_filter: str):
+def get_victims_currently_connected(iface_filter, dns_masq_path=cnf.DNS_MASQ_PATH, arp_results=None):
     """
     Uses read_dnsmasq_file to get detailed info on devices 
     which 'have' connected at some point
@@ -67,10 +71,10 @@ def get_victims_currently_connected(iface_filter: str):
     ->([dict], bool)
     """
     # Get info
-    victim_list, _err = read_dnsmasq_file()
+    victim_list, _err = read_dnsmasq_file(dns_masq_path)
     if _err:
         return None, True
-    arp_data = get_arp_results_for_iface(iface_filter)
+    arp_data = get_arp_results_for_iface(iface_filter, arp_results)
     
     # Run cross-checks on active arp
     active_arp_ips = [arp["vic_ip"] for arp in arp_data]
@@ -117,7 +121,8 @@ def parse_cred_entry(cred_entry, cred_type, regex_pattern):
     details = regex_pattern.findall(cred_entry_strip)
     
     if len(details) == 0:
-        print(f"could not parse {cred_entry}. check regex pattern: {regex_pattern}, matches: {details}")
+        # debug
+        # print(f"could not parse {cred_entry}. check regex pattern: {regex_pattern}, matches: {details}")
         return None, True
     
     # Get tuple

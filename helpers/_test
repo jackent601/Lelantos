@@ -114,3 +114,15 @@ if [[ "$model" == "all" || "$model" == "scan" ]];then
     fi
 fi
 
+if [[ "$model" == "all" || "$model" == "cp" ]];then
+    echo ""
+    echo "---------------------------------------------------------------------"
+    echo "= = = = = = = = = = = Wifiphisher Broker= = = = = = = = = = = = = = = "
+    if [[ "$cover" == "true" ]];then
+        coverage run --source=wifiphisher_broker manage.py test -v 0 wifiphisher_broker.tests 
+        coverage report --omit wifiphisher_broker/migrations/*,
+    else
+        $pythonInterpreter manage.py test -v 0 wifiphisher_broker.tests
+    fi
+fi
+

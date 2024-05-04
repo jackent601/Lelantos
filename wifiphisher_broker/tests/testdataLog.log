@@ -1,7 +1,1 @@
-blank line skipped
-headers are skipped
-resultBssid1,1,1,1,1,1,1,1,1,1,1,1,1,resultsEssid1,1
-resultBssid2,1,1,1,1,1,1,1,1,1,1,1,1,resultsEssid2,1
-Station MAC, First time seen, Last time seen, Power, # packets, BSSID, Probed ESSIDs
-resultMac1,1,1,1,1,1,resultEssid1
-resultMac2,1,1,1,1,1,resultEssid2
+wifiphisher log

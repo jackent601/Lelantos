@@ -1,0 +1,3 @@
+timestamp mac1 1.2.3.4 devicetype1
+timestamp mac2 ip2 devicetype2
+timestamp mac3 ip3 devicetype2

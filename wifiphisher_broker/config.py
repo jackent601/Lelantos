@@ -4,7 +4,12 @@ import os, re
 MODULE_NAME="wifiphisher_captive_portal"
 ARP_FLUSH_WAIT_TIME=3 # time to wait before flushing arp after session close
 
+# DNS details, configurable in case of OS/Distro change
 DNS_MASQ_PATH="/var/lib/misc/dnsmasq.leases" # this will not change in linux
+DNS_SEP=" " 
+DNS_MAC_INDEX=1 
+DNS_IP_INDEX=2
+DNS_TYPE_INDEX=3
 
 # Declare scenarios available
 FIRMWARE_UPGRADE="firmware-upgrade"
