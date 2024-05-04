@@ -27,7 +27,7 @@ import plotly
 # URLS
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # - - - - - - - - - - - - - - Utils - - - - - - - - - - - - - - - - - 
-def getContextFromRequestAndValidate(request):
+def getContextFromRequestAndValidate(request, include_messages=True):
     """
     Retrieves all values needed for all template rendering. 
     Including Model type & Validation
@@ -39,7 +39,8 @@ def getContextFromRequestAndValidate(request):
     app_label = request.GET.get('app_label', None)
     model_name = request.GET.get('model_name', None)
     if app_label is None or model_name is None:
-        message=messages.error(request, "app_label and model_name must be provided parameters to view model_results")
+        if include_messages:
+            message=messages.error(request, "app_label and model_name must be provided parameters to view model_results")
         return None, None, redirect('analysis_home') 
     pageParamReq=f"app_label={app_label}&model_name={model_name}" 
     
@@ -52,7 +53,12 @@ def getContextFromRequestAndValidate(request):
     displayContext['clusterMarkers'] = request.GET.get('clusterMarkers', None)
     
     # Get model type from params
-    modelType = apps.get_model(app_label=displayContext['app_label'], model_name=displayContext['model_name'])
+    try:
+        modelType = apps.get_model(app_label=displayContext['app_label'], model_name=displayContext['model_name'])
+    except:
+        if include_messages:
+            message=messages.error(request, f"no {model_name} in {app_label}, no model type found")
+        return None, None, redirect('analysis_home') 
     displayContext['uniqueIdentifierPattern']=modelType.getModelUniqueIdentifierPatternString()
     displayContext['uniqueFieldIdentifiers']=modelType.uniqueIdentifiers
     
@@ -321,7 +327,7 @@ def model_network_context(request,template="analysis/modelNetwork.html",minNodeS
             nodesWithNoEdges.append(c)
     
     # Get network figure
-    fig = getScaledNetworkGraph(nodesWithEdges, edges, maxNodeSize, minNodeSize)
+    fig, _, _ = getScaledNetworkGraph(nodesWithEdges, edges, maxNodeSize, minNodeSize)
 
     # prepare plot for django rendering
     networkGraph=plotly.offline.plot(fig, auto_open = False, output_type="div")
@@ -445,6 +451,7 @@ def getScaledNetworkGraph(nodes, edges, maxNodeSize, minNodeSize):
         relativeAdjacencies=node_adjacencies
         scaledSize=[(maxNodeSize-minNodeSize)/2 for _ in relativeAdjacencies]
     else:
+        
         relativeAdjacencies=[(a-minAdjacency)/(maxAdjacency-minAdjacency) for a in node_adjacencies]
         scaledSize=[minNodeSize+(maxNodeSize-minNodeSize)*relA for relA in relativeAdjacencies]
         
@@ -483,11 +490,11 @@ def getScaledNetworkGraph(nodes, edges, maxNodeSize, minNodeSize):
                     margin=dict(b=20,l=5,r=5,t=40),
                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)))
-    return fig
+    return fig, scaledSize, relativeAdjacencies
 
 # - - - - - - - - - - - - - - API Utils - - - - - - - - - - - - - - - - - -
 def renderAPIContext(ctx, network=False):
-    # remove fields not needed in api
+    """ removes fields not needed in api """
     if ctx is None:
         return HttpResponse("{}", content_type="application/json")
     del ctx['map']
@@ -503,4 +510,3 @@ def renderAPIContext(ctx, network=False):
     # # construct api response
     apiResponse=json.dumps(ctx)
     return HttpResponse(apiResponse, content_type="application/json")
-    # return HttpResponse(ctx['allModels'], content_type="application/json")
