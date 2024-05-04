@@ -179,8 +179,9 @@ class AircrackNgBroker_TestCase(TestCase):
         req.method="POST"
         # start
         ctx = ng_views.ng_wifi_run_scan(req, include_messages=False, testcase=True)
-        # check is a redirect
-        self.assertIsInstance(ctx, HttpResponse)
+        # check is a redirect (historic_scans key from home page context)
+        if "historic_scans" not in ctx.keys():
+            self.fail("not redirected correctly")
         print("     pass: test_ngWifiRunScanInputForm_NoInterface") 
         
     def test_ngWifiRunScanInputForm_GetReq(self): 
@@ -198,8 +199,19 @@ class AircrackNgBroker_TestCase(TestCase):
         self.assertIsInstance(ctx, HttpResponse)
         print("     pass: test_ngWifiRunScanInputForm_GetReq")
         
+    def test_ParseScanResults(self):
+        """ parses testdata to check results unpacked successfully """
+        # Read test data
+        with open(TEST_DATA_ABS_PATH, "r") as resFile:
+            testData=resFile.read()
+        # Parse results
+        beaconResults, stationResults = ng_views.saveAiroDumpResults(testData, self.prevScan)
+        # check results
+        self.checkTestDataResultsContent(stationResults, beaconResults, self.prevScan)
+        print("     pass: test_ParseScanResults")  
+    
     def test_StopScan(self):
-        """ Stop a running scan """
+        """ Stop a running scan and check results are correctly parsed and fetched """
         req=HttpRequest()
         req.user=self.user
         ng_views.SCAN_MAP={}

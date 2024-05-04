@@ -115,7 +115,7 @@ def ng_wifi_run_scan(request, include_messages=True, testcase=False):
         # Message to select interface
         if include_messages:
             message=messages.error(request, "Please select an interface to start scan")
-        return ng_wifi_scan_home(request)
+        return ng_wifi_scan_home(request, testcase=testcase)
     interface = request.POST["wifiInterfaceSelect"]
     if 'scanTime' not in request.POST:
         # default 30 seconds
@@ -190,6 +190,7 @@ def util_show_scan_results(request, scan_id, testcase=False):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - Devices
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+# TODO - this has been moved to utils, delete code
 # def get_wifi_devices(testcase=False):
 #     """
 #     uses airmon-ng to find available devices for scan
