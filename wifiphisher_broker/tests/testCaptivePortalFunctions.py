@@ -56,15 +56,15 @@ def copyCPWifiLogsFromObj(cpObj):
     copyTestLogData(cpObj.log_file_path)
     copyTestWifiCredLogData(cpObj.cred_file_path)
 
-def captivePortalPrep(cls):
+def captivePortalPrep(cls, username="test", id=1):
     """ test data for scan """
-    cls.user_username="test"
+    cls.user_username=username
     cls.user_password="test"
-    cls.user = User.objects.create_user("test","test","test")
+    cls.user = User.objects.create_user(username,"test","test")
     # Session
-    cls.sesh = Session.objects.create(session_id=1, user=cls.user, start_time=timezone.now(), src_ip="x.x.x.x", active=True)
+    cls.sesh = Session.objects.create(session_id=id, user=cls.user, start_time=timezone.now(), src_ip="x.x.x.x", active=True)
     cls.c = Client()
-    cls.c.login(username=cls.user_username, password=cls.user_password)
+    cls.c.login(username=username, password=cls.user_password)
     # Location
     testLocPoint=GEOSGeometry(f"POINT (-641025.8565339005 7308772.180542897)", srid=4326)
     cls.loc = Location.objects.create(session=cls.sesh, name="testLoc", location=testLocPoint, area="testArea", remarks="testRemarks")
@@ -88,7 +88,7 @@ def captivePortalPrep(cls):
                                                                    location=cls.loc, 
                                                                    start_time=timezone.now(), 
                                                                    active=False,
-                                                                   interface="TestInterfaceWifi",
+                                                                   interface="TestInterface",
                                                                    essid="TestEssidWifi",
                                                                    scenario=wp_cfg.FIRMWARE_UPGRADE,
                                                                    cred_type=wp_cfg.CRED_TYPE_WPA_PASSWORD,
@@ -190,16 +190,46 @@ class WifiPhisherBroker_Utils_TestCase(TestCase):
         
 class WifiPhisherBroker_Models_TestCase(TestCase):
     """
-    Aircrack-ng's wrapper functions
+    wifiphishers model methods, they use the above utils but also, and improtantly, cross check against stored django models
     """
     @classmethod
     def setUpTestData(cls):
         print("WifiPhisherBroker_Models_TestCase - - - - - - - - - - - - - - - - - -")
-        captivePortalPrep(cls)
+        captivePortalPrep(cls, "modeltest", 2)
         
     @classmethod
     def tearDownClass(cls):
         os.remove(cls.prevCPUserCreds.log_file_path)
         os.remove(cls.prevCPUserCreds.cred_file_path)
         os.remove(cls.prevCPWifiCreds.log_file_path)
-        os.remove(cls.prevCPWifiCreds.cred_file_path)  
+        os.remove(cls.prevCPWifiCreds.cred_file_path)
+        
+    def testModelUpdate_UserCredentials(self):
+        """ update is what runs all the cross checking above, creates django models, and matches to devices"""  
+        victims, creds = self.prevCPUserCreds.update(dns_masq_path=TEST_DNS_MASQ_FILE_ABS_PATH, arp_results=TEST_ARP_RESULTS)
+        # Two victims, but only one credential
+        self.assertEqual(1, len(creds))
+        self.assertEqual(2, len(victims))
+        # check credential unpacked properly and linked to victim
+        cred=creds[0]        
+        self.assertEqual("TestVictim1", cred.username)
+        self.assertEqual("TestVictimPassword1", cred.password)
+        victimdev=cred.device
+        self.assertEqual("mac1", victimdev.mac_addr)
+        self.assertEqual("1.2.3.4", victimdev.ip)
+        print("     pass: testModelUpdate_UserCredentials")
+        
+    def testModelUpdate_WifiCredentials(self):
+        """ update is what runs all the cross checking above, creates django models, and matches to devices"""  
+        victims, creds = self.prevCPWifiCreds.update(dns_masq_path=TEST_DNS_MASQ_FILE_ABS_PATH, arp_results=TEST_ARP_RESULTS)
+        # Two victims, but only one credential
+        self.assertEqual(1, len(creds))
+        self.assertEqual(2, len(victims))
+        # check credential unpacked properly and linked to victim (no username for wpa-password)
+        cred=creds[0]        
+        self.assertEqual("", cred.username)
+        self.assertEqual("TestWPAPassword", cred.password)
+        victimdev=cred.device
+        self.assertEqual("mac1", victimdev.mac_addr)
+        self.assertEqual("1.2.3.4", victimdev.ip)
+        print("     pass: testModelUpdate_WifiCredentials")

@@ -43,12 +43,12 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
     aux_data = models.CharField(max_length=2000)
     cred_type = models.CharField(max_length=2000)
     
-    def update_victims(self):
+    def update_victims(self, dns_masq_path=cfg.DNS_MASQ_PATH, arp_results=None):
         """
         Compares victims that have connected (linux) to all recorded victims (django) for the session and updates django appropriately
         for the session
         """
-        dns_victim_list, error = get_victims_currently_connected(self.interface)
+        dns_victim_list, error = get_victims_currently_connected(self.interface, dns_masq_path=dns_masq_path, arp_results=arp_results)
         if error:
             return
         for victim in dns_victim_list:
@@ -70,9 +70,9 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         """Returns all devices that have connected to AP during session"""
         return [d for d in Device_Instance.objects.filter(module_session_captured=self)]
     
-    def get_and_update_victims(self)->[Device_Instance]:
+    def get_and_update_victims(self, dns_masq_path=cfg.DNS_MASQ_PATH, arp_results=None)->[Device_Instance]:
         "updates victims, returns all victims"
-        self.update_victims()
+        self.update_victims(dns_masq_path=dns_masq_path, arp_results=arp_results)
         return self.get_victims()
     
     def flush_victim_arp(self)->bool:
@@ -123,9 +123,9 @@ class Wifiphisher_Captive_Portal_Session(Module_Session):
         self.update_credentials()
         return self.get_cred_results()
     
-    def update(self):
+    def update(self, dns_masq_path=cfg.DNS_MASQ_PATH, arp_results=None):
         """Updates victims and credentials """
-        victims = self.get_and_update_victims()
+        victims = self.get_and_update_victims(dns_masq_path=dns_masq_path, arp_results=arp_results)
         creds = self.get_and_update_cred_results()
         return victims, creds
     
