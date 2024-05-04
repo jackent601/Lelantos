@@ -16,6 +16,7 @@ cat << EOF
 
   OPTIONS
     --cover     include cover profiles
+    --project   dont run module by module
 
 
 EOF
@@ -32,6 +33,10 @@ case "${1}" in
     ;;
     --cover)
     cover=true
+    shift 
+    ;;
+    --project)
+    project=true
     shift 
     ;;
     # We've handled all of our flags, now it's onto anything else (the positional args).
@@ -53,17 +58,28 @@ case "${1}" in
 esac
 done
 
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+
+# catch project flag
+if [[ "$project" == "true" ]];then
+    if [[ "$cover" == "true" ]];then
+        coverage run --source=lelantos_base,portal_auth,analysis,aircrack_ng_broker,wifiphisher_broker manage.py test -v 0 lelantos_base.tests portal_auth.tests analysis.tests aircrack_ng_broker.tests wifiphisher_broker.tests
+        coverage report --omit lelantos_base/management/*,lelantos_base/migrations/*,portal_auth/migrations/*,analysis/migrations/*,aircrack_ng_broker/migrations/*,wifiphisher_broker/migrations/*,
+    else
+        $pythonInterpreter manage.py test -v 0 lelantos_base.tests portal_auth.tests analysis.tests aircrack_ng_broker.tests wifiphisher_broker.tests
+    fi
+    exit 0
+fi
+
 # validate
 if [[ "$model" != "all" && "$model" != "base" && "$model" != "auth" && "$model" != "analysis" && "$model" != "scan" && "$model" != "cp" ]];then
     _usage
     echo "unrecognised model: $model"
     exit 1
-fi
-
-pythonInterpreter=python
-command -v python
-if [[ "$?" -ne 0 ]];then
-    pythonInterpreter=python3
 fi
 
 if [[ "$model" == "all" || "$model" == "base" ]];then

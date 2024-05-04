@@ -117,8 +117,11 @@ class Module_Session(models.Model):
     active = models.BooleanField()
     pid = models.PositiveIntegerField(null=True)
     
-    def end_module_session(self):
-        ended = subprocess.run(["sudo", "kill", "-9", str(self.pid)]).returncode == 0
+    def end_module_session(self, testcase=False):
+        if not testcase:
+            ended = subprocess.run(["sudo", "kill", "-9", str(self.pid)]).returncode == 0
+        else:
+            ended=True
         self.end_time=timezone.now()
         self.active=False
         self.save()

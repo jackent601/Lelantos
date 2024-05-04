@@ -13,7 +13,7 @@ from shutil import copyfile
 from wifiphisher_broker.models import Wifiphisher_Captive_Portal_Session
 import wifiphisher_broker.views as cp_views
 import wifiphisher_broker.utils as cp_utils
-import wifiphisher_broker.config as wp_cfg
+import wifiphisher_broker.config as cp_cfg
 
 # test files
 TEST_LOG_REL_PATH="wifiphisher_broker/tests/testdataLog.log"
@@ -71,27 +71,27 @@ def captivePortalPrep(cls, username="test", id=1):
     # Module Session
     cls.mSesh= Module_Session.objects.create(session=cls.sesh, location=cls.loc, module_name="testModule", start_time=timezone.now(), active=False)
     # Captive Portal Session (user credential captures)
-    log_path, cred_path = cp_utils.get_new_log_paths("TestInterface", wp_cfg.OAUTH_LOGIN, "TestEssid") 
+    log_path, cred_path = cp_utils.get_new_log_paths("TestInterface", cp_cfg.OAUTH_LOGIN, "TestEssid") 
     cls.prevCPUserCreds = Wifiphisher_Captive_Portal_Session.objects.create(session=cls.sesh, 
                                                                    location=cls.loc, 
                                                                    start_time=timezone.now(), 
                                                                    active=False,
                                                                    interface="TestInterface",
                                                                    essid="TestEssid",
-                                                                   scenario=wp_cfg.OAUTH_LOGIN,
-                                                                   cred_type=wp_cfg.CRED_TYPE_USER,
+                                                                   scenario=cp_cfg.OAUTH_LOGIN,
+                                                                   cred_type=cp_cfg.CRED_TYPE_USER,
                                                                    log_file_path=log_path,
                                                                    cred_file_path=cred_path)
     # Captive Portal Session (user credential captures)
-    wifi_log_path, wifi_cred_path = cp_utils.get_new_log_paths("TestInterface", wp_cfg.FIRMWARE_UPGRADE, "TestEssidWifi") 
+    wifi_log_path, wifi_cred_path = cp_utils.get_new_log_paths("TestInterface", cp_cfg.FIRMWARE_UPGRADE, "TestEssidWifi") 
     cls.prevCPWifiCreds = Wifiphisher_Captive_Portal_Session.objects.create(session=cls.sesh, 
                                                                    location=cls.loc, 
                                                                    start_time=timezone.now(), 
                                                                    active=False,
                                                                    interface="TestInterface",
                                                                    essid="TestEssidWifi",
-                                                                   scenario=wp_cfg.FIRMWARE_UPGRADE,
-                                                                   cred_type=wp_cfg.CRED_TYPE_WPA_PASSWORD,
+                                                                   scenario=cp_cfg.FIRMWARE_UPGRADE,
+                                                                   cred_type=cp_cfg.CRED_TYPE_WPA_PASSWORD,
                                                                    log_file_path=wifi_log_path,
                                                                    cred_file_path=wifi_cred_path)
     copyCPWifiLogsFromObj(cls.prevCPWifiCreds)
@@ -204,7 +204,7 @@ class WifiPhisherBroker_Models_TestCase(TestCase):
         os.remove(cls.prevCPWifiCreds.log_file_path)
         os.remove(cls.prevCPWifiCreds.cred_file_path)
         
-    def testModelUpdate_UserCredentials(self):
+    def test_ModelUpdate_UserCredentials(self):
         """ update is what runs all the cross checking above, creates django models, and matches to devices"""  
         victims, creds = self.prevCPUserCreds.update(dns_masq_path=TEST_DNS_MASQ_FILE_ABS_PATH, arp_results=TEST_ARP_RESULTS)
         # Two victims, but only one credential
@@ -217,9 +217,9 @@ class WifiPhisherBroker_Models_TestCase(TestCase):
         victimdev=cred.device
         self.assertEqual("mac1", victimdev.mac_addr)
         self.assertEqual("1.2.3.4", victimdev.ip)
-        print("     pass: testModelUpdate_UserCredentials")
+        print("     pass: test_ModelUpdate_UserCredentials")
         
-    def testModelUpdate_WifiCredentials(self):
+    def test_ModelUpdate_WifiCredentials(self):
         """ update is what runs all the cross checking above, creates django models, and matches to devices"""  
         victims, creds = self.prevCPWifiCreds.update(dns_masq_path=TEST_DNS_MASQ_FILE_ABS_PATH, arp_results=TEST_ARP_RESULTS)
         # Two victims, but only one credential
@@ -232,4 +232,156 @@ class WifiPhisherBroker_Models_TestCase(TestCase):
         victimdev=cred.device
         self.assertEqual("mac1", victimdev.mac_addr)
         self.assertEqual("1.2.3.4", victimdev.ip)
-        print("     pass: testModelUpdate_WifiCredentials")
+        print("     pass: test_ModelUpdate_WifiCredentials")
+        
+class WifiPhisherBroker_Views_TestCase(TestCase):
+    """
+    wifiphishers model methods, they use the above utils but also, and improtantly, cross check against stored django models
+    """
+    @classmethod
+    def setUpTestData(cls):
+        print("WifiPhisherBroker_Models_TestCase - - - - - - - - - - - - - - - - - -")
+        captivePortalPrep(cls, "viewsTest", 3)
+        
+    @classmethod
+    def tearDownClass(cls):
+        os.remove(cls.prevCPUserCreds.log_file_path)
+        os.remove(cls.prevCPUserCreds.cred_file_path)
+        os.remove(cls.prevCPWifiCreds.log_file_path)
+        os.remove(cls.prevCPWifiCreds.cred_file_path)
+        
+    def test_WifiphisherCaptivePortalHome(self):
+        """ update is what runs all the cross checking above, creates django models, and matches to devices"""  
+        req=HttpRequest()
+        req.user=self.user 
+        ctx = cp_views.wifiphisher_captive_portal_home(req, False, True, True)
+        # unpack and check context
+        status=ctx['captive_portal_status']
+        # no running sessions
+        self.assertEqual(status, False)
+        # only test interface
+        interfaces=ctx['interfaces']
+        self.assertEqual(1, len(interfaces))
+        self.assertEqual("TestInterface", interfaces[0])
+        # test user has two previous scans
+        prevSession=ctx['historic_captures']
+        self.assertEqual(2, len(prevSession))
+        print("     pass: test_WifiphisherCaptivePortalHome")
+        
+    def test_WifiphisherCaptivePortalLaunch_Fail_GetReq(self):
+        """ failed cp launch due to get not post request """  
+        req=HttpRequest()
+        req.user=self.user 
+        req.method="GET"
+        resp = cp_views.wifiphisher_captive_portal_launch(req, False, True)
+        # check redirect to home
+        self.assertIsInstance(resp, HttpResponse)
+        self.assertEqual(resp.url, "/captive_portal_home/")
+        print("     pass: test_WifiphisherCaptivePortalLaunch_Fail_GetReq")
+        
+    def test_WifiphisherCaptivePortalLaunch_Fail_AlreadyActiveSession(self):
+        """ failed cp launch as cp already running """  
+        req=HttpRequest()
+        req.user=self.user 
+        req.method="POST"
+        # set session to active
+        egSesh = Wifiphisher_Captive_Portal_Session.objects.filter(session=self.sesh).first()
+        egSesh.active=True
+        egSesh.save()
+        resp = cp_views.wifiphisher_captive_portal_launch(req, False, True)
+        # check redirect to monitor
+        self.assertIsInstance(resp, HttpResponse)
+        self.assertEqual(resp.url, "/captive_portal_monitor/")
+        print("     pass: test_WifiphisherCaptivePortalLaunch_Fail_AlreadyActiveSession")
+        
+    def test_WifiphisherCaptivePortalLaunch_Success(self):
+        """ cp launch """  
+        req=HttpRequest()
+        req.user=self.user 
+        req.method="POST"
+        req.POST['interface']="NewInterface"
+        req.POST['scenario']=cp_cfg.OAUTH_LOGIN
+        req.POST['essid']="testEssid"
+        newCPSession = cp_views.wifiphisher_captive_portal_launch(req, False, True)
+        # check new cp-session and tied to this sesh
+        self.assertIsInstance(newCPSession, Wifiphisher_Captive_Portal_Session)
+        self.assertEqual(self.sesh, newCPSession.session)
+        print("     pass: test_WifiphisherCaptivePortalLaunch_Success")
+        
+    def test_WifiphisherCaptivePortalMonitor_Fail_NoSessions(self):
+        """ cp launch """  
+        req=HttpRequest()
+        req.user=self.user 
+        req.method="GET"
+        resp = cp_views.wifiphisher_captive_portal_monitor(req, False, True)
+        # no session, redirect
+        self.assertIsInstance(resp, HttpResponse)
+        self.assertEqual(resp.url, "/captive_portal_home/")
+        print("     pass: test_WifiphisherCaptivePortalMonitor_Fail_NoSessions")
+        
+    def test_WifiphisherCaptivePortalMonitor_Success(self):
+        """ cp monitor """  
+        req=HttpRequest()
+        req.user=self.user 
+        req.method="GET"
+        # set active session
+        egSesh = Wifiphisher_Captive_Portal_Session.objects.filter(session=self.sesh).first()
+        egSesh.active=True
+        egSesh.save()
+        ctx = cp_views.wifiphisher_captive_portal_monitor(req, False, True)
+        # check correct instance retrieved
+        self.assertEqual(ctx['monitor'], egSesh)
+        print("     pass: test_WifiphisherCaptivePortalMonitor_Success")
+        
+    def test_WifiphisherCaptivePortalStop(self):
+        """ cp stop """  
+        req=HttpRequest()
+        req.user=self.user 
+        req.method="GET"
+        # set active session
+        egSesh = Wifiphisher_Captive_Portal_Session.objects.filter(session=self.sesh).first()
+        egSesh.active=True
+        egSesh.save()
+        # request stop
+        _ = cp_views.wifiphisher_captive_portal_stop(req, False, True, True)
+        # check correct instance stopped
+        egSesh.refresh_from_db()
+        self.assertEqual(egSesh.active, False)
+        print("     pass: test_WifiphisherCaptivePortalStop")
+        
+    def test_wifiphisherCaptivePortalResults(self):
+        """ fetches results from id """  
+        # first create results for session
+        _, _ = self.prevCPUserCreds.update(dns_masq_path=TEST_DNS_MASQ_FILE_ABS_PATH, arp_results=TEST_ARP_RESULTS)
+        # fetch request
+        req=HttpRequest()
+        req.user=self.user 
+        req.method="GET"
+        req.GET['session_id']=self.prevCPUserCreds.id
+        ctx = cp_views.wifiphisher_captive_portal_results(req, False, True)
+        creds=ctx['credentials']
+        victims=ctx['victims']
+        # check results as expected
+        # Two victims, but only one credential
+        self.assertEqual(1, len(creds))
+        self.assertEqual(2, len(victims))
+        # check credential unpacked properly and linked to victim
+        cred=creds[0]        
+        self.assertEqual("TestVictim1", cred.username)
+        self.assertEqual("TestVictimPassword1", cred.password)
+        victimdev=cred.device
+        self.assertEqual("mac1", victimdev.mac_addr)
+        self.assertEqual("1.2.3.4", victimdev.ip)
+        print("     pass: test_wifiphisherCaptivePortalResults")
+        
+    def test_wifiphisherCaptivePortalPreviousCaptures(self):
+        """ all previous cp sessions for user """
+        # fetch request
+        req=HttpRequest()
+        req.user=self.user 
+        req.method="GET"
+        ctx = cp_views.wifiphisher_captive_portal_previous_captures(req, False, True)
+        # class has two session
+        self.assertEqual(len(ctx['historic_captures']), 2)
+        print("     pass: test_wifiphisherCaptivePortalPreviousCaptures")
+        

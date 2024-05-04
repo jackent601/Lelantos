@@ -21,7 +21,7 @@ SCAN_MAP={}
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 # HOME
-def ng_wifi_scan_home(request, testcase=False):
+def ng_wifi_scan_home(request, ctx_only=False, testcase=False):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, 
                                                             "You must be logged in to access wifi scans")
@@ -44,13 +44,13 @@ def ng_wifi_scan_home(request, testcase=False):
     # Historic Scans
     historic_scans=Wifi_Scan.objects.filter(session__user=active_session.user).order_by('-start_time')
     ctx={"info":wifiDevicesDetails, "device_list":availableDevices, "historic_scans":historic_scans}
-    if testcase:
+    if ctx_only:
         # return context only
         return ctx
     return render(request, 'aircrack_ng_broker/wifi_scan.html', ctx)
 
 # RESULTS
-def ng_wifi_previous_scans(request, testcase=False):
+def ng_wifi_previous_scans(request, ctx_only=False):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
@@ -61,11 +61,11 @@ def ng_wifi_previous_scans(request, testcase=False):
     
     historic_scans=Wifi_Scan.objects.all().filter(session__user=active_session.user).order_by('-start_time')
     ctx={"historic_scans":historic_scans}
-    if testcase:
+    if ctx_only:
         return ctx
     return render(request, 'aircrack_ng_broker/wifi_scan_previous_scans.html', ctx)
 
-def ng_wifi_show_scan_results(request, testcase=False):
+def ng_wifi_show_scan_results(request, ctx_only=False):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
@@ -80,10 +80,10 @@ def ng_wifi_show_scan_results(request, testcase=False):
         message=messages.error(request, "Must select a scan to view it's results, no scan_id in request params")
         return redirect('ng_wifi_previous_scans')
     
-    return util_show_scan_results(request, scan_id, testcase)
+    return util_show_scan_results(request, scan_id, ctx_only)
 
 # RUN SCAN
-def ng_wifi_run_scan(request, include_messages=True, testcase=False):
+def ng_wifi_run_scan(request, include_messages=True, ctx_only=False, testcase=False):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
@@ -115,7 +115,7 @@ def ng_wifi_run_scan(request, include_messages=True, testcase=False):
         # Message to select interface
         if include_messages:
             message=messages.error(request, "Please select an interface to start scan")
-        return ng_wifi_scan_home(request, testcase=testcase)
+        return ng_wifi_scan_home(request, ctx_only=ctx_only, testcase=testcase)
     interface = request.POST["wifiInterfaceSelect"]
     if 'scanTime' not in request.POST:
         # default 30 seconds
@@ -135,14 +135,14 @@ def ng_wifi_run_scan(request, include_messages=True, testcase=False):
     wifi_scan.save()
     
     # Run scan
-    _error, errorMsg=ng_wifi_scan(wifi_scan, testcase)
+    _error, errorMsg=ng_wifi_scan(wifi_scan, ctx_only)
     if _error:
         if include_messages:
             message=messages.error(request, errorMsg)
         return redirect('ng_wifi_scan_home')
     
     ctx={'scan_id':wifi_scan.id, 'refresh_after': 1000*wifi_scan.duration_s}
-    if testcase:
+    if ctx_only:
         return ctx
     
     return render(request, 'aircrack_ng_broker/wifi_scan_loading.html', {'scan_id':wifi_scan.id, 'refresh_after': 1000*wifi_scan.duration_s})
@@ -177,13 +177,13 @@ def ng_wifi_scan_stop(request):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - view utils
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def util_show_scan_results(request, scan_id, testcase=False):
+def util_show_scan_results(request, scan_id, ctx_only=False):
     
     # Get results from django db
     beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(module_session_captured__id=scan_id)
     stationResults=Wifi_Scan_Station_Result.objects.all().filter(module_session_captured__id=scan_id)
     ctx={"beaconResults":beaconResults, "stationResults": stationResults}
-    if testcase:
+    if ctx_only:
         return ctx
     
     return render(request, 'aircrack_ng_broker/wifi_scan_results.html', ctx)
@@ -191,7 +191,7 @@ def util_show_scan_results(request, scan_id, testcase=False):
 # UTILS - Devices
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # TODO - this has been moved to utils, delete code
-# def get_wifi_devices(testcase=False):
+# def get_wifi_devices(ctx_only=False):
 #     """
 #     uses airmon-ng to find available devices for scan
 #     """
@@ -236,7 +236,7 @@ def util_show_scan_results(request, scan_id, testcase=False):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - Scanning
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def ng_wifi_scan(scanObj: Wifi_Scan, testcase=False):
+def ng_wifi_scan(scanObj: Wifi_Scan, ctx_only=False):
     """
     Uses airmon/airodump to scan wifi.
     Returns error (bool), error message (str), scan
@@ -251,7 +251,7 @@ def ng_wifi_scan(scanObj: Wifi_Scan, testcase=False):
     filePathPattern=f'{filePathPrefix}*'
     
     # First start interface monitoring, no effect if alreay in monitor mode
-    if not testcase:
+    if not ctx_only:
         monitor_on = subprocess.run(["sudo", "airmon-ng", "start", interface_name])
         if monitor_on.returncode != 0:
             return True, f"Could not set {interface_name} to monitor"
@@ -262,7 +262,7 @@ def ng_wifi_scan(scanObj: Wifi_Scan, testcase=False):
     scanObj.save()
     
     # Run scan, need to use popen as command wont exit
-    if not testcase:
+    if not ctx_only:
         scanProc=subprocess.Popen(["sudo", "airodump-ng", monitor_interface, "-w", filePathPrefix, "--output-format", "csv"], 
                               close_fds=True)
     else:
@@ -272,7 +272,7 @@ def ng_wifi_scan(scanObj: Wifi_Scan, testcase=False):
     SCAN_MAP[scanObj]=scanProc
     return False, None
 
-def scan_loading_finished(request, scanObj, scanProc, testcase=False):
+def scan_loading_finished(request, scanObj, scanProc, ctx_only=False):
     
     # time.sleep(scan_time)
     # End scan once duration reached
@@ -285,7 +285,7 @@ def scan_loading_finished(request, scanObj, scanProc, testcase=False):
     scanObj.save()
     
     # Reset monitor
-    if not testcase:
+    if not ctx_only:
         subprocess.run(["sudo", "airmon-ng", "stop", scanObj.monitor_interface])
     
     # Read & Save results
@@ -298,7 +298,7 @@ def scan_loading_finished(request, scanObj, scanProc, testcase=False):
     beaconResults, stationResults = saveAiroDumpResults(results, scanObj)
     # Clean tmp file
     os.remove(resultFilePath)
-    if testcase:
+    if ctx_only:
         return beaconResults, stationResults
     return util_show_scan_results(request, scanObj.id)
 

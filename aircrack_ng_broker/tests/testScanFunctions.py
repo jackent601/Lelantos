@@ -80,7 +80,7 @@ class AircrackNgBroker_TestCase(TestCase):
         # get base response
         req=HttpRequest()
         req.user=self.user
-        ctx = ng_views.ng_wifi_scan_home(req, True)
+        ctx = ng_views.ng_wifi_scan_home(req, True, True)
         # unpack context
         availableDevices=ctx['device_list']
         prevScans=ctx['historic_scans']
@@ -157,7 +157,7 @@ class AircrackNgBroker_TestCase(TestCase):
         req.method="POST"
         req.POST['wifiInterfaceSelect']="interfaceFromForm"
         # start
-        ctx = ng_views.ng_wifi_run_scan(req, include_messages=False, testcase=True)
+        ctx = ng_views.ng_wifi_run_scan(req, include_messages=False, ctx_only=True, testcase=True)
         # check scan object created
         scansCreated=Wifi_Scan.objects.filter(interface="interfaceFromForm")
         self.assertEqual(1, len(scansCreated))
@@ -178,7 +178,7 @@ class AircrackNgBroker_TestCase(TestCase):
         req.user=self.user
         req.method="POST"
         # start
-        ctx = ng_views.ng_wifi_run_scan(req, include_messages=False, testcase=True)
+        ctx = ng_views.ng_wifi_run_scan(req, include_messages=False, ctx_only=True, testcase=True)
         # check is a redirect (historic_scans key from home page context)
         if "historic_scans" not in ctx.keys():
             self.fail("not redirected correctly")
@@ -194,7 +194,7 @@ class AircrackNgBroker_TestCase(TestCase):
         req.method="GET"
         req.POST['wifiInterfaceSelect']="interfaceFromForm"
         # start
-        ctx = ng_views.ng_wifi_run_scan(req, include_messages=False, testcase=True)
+        ctx = ng_views.ng_wifi_run_scan(req, include_messages=False, ctx_only=True, testcase=True)
         # check is a redirect
         self.assertIsInstance(ctx, HttpResponse)
         print("     pass: test_ngWifiRunScanInputForm_GetReq")
