@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from lelantos_base.models import Session
 from django.test import Client
 from django.utils import timezone
+
+from django.http import HttpRequest
 from django.conf import settings
 from importlib import import_module
 

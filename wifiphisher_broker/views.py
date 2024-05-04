@@ -246,3 +246,4 @@ def wifiphisher_captive_portal_results(request):
                    "victims":victims,
                    "credentials": creds,
                    "credential_type":wphisher_session.cred_type})
+    

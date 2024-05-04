@@ -102,3 +102,15 @@ if [[ "$model" == "all" || "$model" == "analysis" ]];then
     fi
 fi
 
+if [[ "$model" == "all" || "$model" == "scan" ]];then
+    echo ""
+    echo "---------------------------------------------------------------------"
+    echo "= = = = = = = = = = = Aircrack-ng Broker= = = = = = = = = = = = = = = "
+    if [[ "$cover" == "true" ]];then
+        coverage run --source=aircrack_ng_broker manage.py test -v 0 aircrack_ng_broker.tests 
+        coverage report --omit aircrack_ng_broker/migrations/*,
+    else
+        $pythonInterpreter manage.py test -v 0 aircrack_ng_broker.tests
+    fi
+fi
+

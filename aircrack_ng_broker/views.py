@@ -6,7 +6,7 @@ from django.utils import timezone
 from aircrack_ng_broker.models import *
 import aircrack_ng_broker.config as cfg
 import portal_auth.utils as auth_utils
-
+import utils.utils as gen_utils
 import glob, os, datetime, time, subprocess
 
 DEFAULT_SCAN_TIME_s=30
@@ -21,7 +21,7 @@ SCAN_MAP={}
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 # HOME
-def ng_wifi_scan_home(request):
+def ng_wifi_scan_home(request, testcase=False):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, 
                                                             "You must be logged in to access wifi scans")
@@ -38,17 +38,19 @@ def ng_wifi_scan_home(request):
         return redirect('setLocation')
     
     # Devices
-    wifiDevicesDetails=get_wifi_devices()
+    wifiDevicesDetails=gen_utils.get_wifi_devices(testcase)
     availableDevices=[d["Interface"] for d in wifiDevicesDetails]
     
     # Historic Scans
     historic_scans=Wifi_Scan.objects.filter(session__user=active_session.user).order_by('-start_time')
-    return render(request, 'aircrack_ng_broker/wifi_scan.html', {"info":wifiDevicesDetails, 
-                                                                 "device_list":availableDevices, 
-                                                                 "historic_scans":historic_scans})
+    ctx={"info":wifiDevicesDetails, "device_list":availableDevices, "historic_scans":historic_scans}
+    if testcase:
+        # return context only
+        return ctx
+    return render(request, 'aircrack_ng_broker/wifi_scan.html', ctx)
 
 # RESULTS
-def ng_wifi_previous_scans(request):
+def ng_wifi_previous_scans(request, testcase=False):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
@@ -58,9 +60,12 @@ def ng_wifi_previous_scans(request):
         return redirect('home')
     
     historic_scans=Wifi_Scan.objects.all().filter(session__user=active_session.user).order_by('-start_time')
-    return render(request, 'aircrack_ng_broker/wifi_scan_previous_scans.html', {"historic_scans":historic_scans})
+    ctx={"historic_scans":historic_scans}
+    if testcase:
+        return ctx
+    return render(request, 'aircrack_ng_broker/wifi_scan_previous_scans.html', ctx)
 
-def ng_wifi_show_scan_results(request):
+def ng_wifi_show_scan_results(request, testcase=False):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
@@ -75,28 +80,31 @@ def ng_wifi_show_scan_results(request):
         message=messages.error(request, "Must select a scan to view it's results, no scan_id in request params")
         return redirect('ng_wifi_previous_scans')
     
-    return util_show_scan_results(request, scan_id)
+    return util_show_scan_results(request, scan_id, testcase)
 
 # RUN SCAN
-def ng_wifi_run_scan(request):
+def ng_wifi_run_scan(request, include_messages=True, testcase=False):
     # Auth
     active_session, _redirect, _error = auth_utils.get_session_from_request(request, "You must be logged in to access wifi scans")
     if _error:
         return _redirect
     if active_session is None:
-        message=messages.error(request, "No active session for user, log out and in again to create a session")
+        if include_messages:
+            message=messages.error(request, "No active session for user, log out and in again to create a session")
         return redirect('home')
     
     # Location
     location = active_session.getMostRecentLocation()
     if location is None:
-        message=messages.error(request, "Warning: Must set location before running exploits")
+        if include_messages:
+            message=messages.error(request, "Warning: Must set location before running exploits")
         return redirect('setLocation')
     
     # Not a post, scan not submitted, show most recent results
     if request.method != "POST":
         # Message to warn not recent
-        message=messages.error(request, "Scan details not provided, showing most recent results for user.")
+        if include_messages:
+            message=messages.error(request, "Scan details not provided, showing most recent results for user.")
         # render recent stuff
         most_recent_id=Wifi_Scan.objects.all().order_by('-start_time').first().id
         # Return
@@ -105,7 +113,8 @@ def ng_wifi_run_scan(request):
     # Scan
     if 'wifiInterfaceSelect' not in request.POST:
         # Message to select interface
-        message=messages.error(request, "Please select an interface to start scan")
+        if include_messages:
+            message=messages.error(request, "Please select an interface to start scan")
         return ng_wifi_scan_home(request)
     interface = request.POST["wifiInterfaceSelect"]
     if 'scanTime' not in request.POST:
@@ -126,10 +135,15 @@ def ng_wifi_run_scan(request):
     wifi_scan.save()
     
     # Run scan
-    _error, errorMsg=ng_wifi_scan(wifi_scan)
+    _error, errorMsg=ng_wifi_scan(wifi_scan, testcase)
     if _error:
-        message=messages.error(request, errorMsg)
+        if include_messages:
+            message=messages.error(request, errorMsg)
         return redirect('ng_wifi_scan_home')
+    
+    ctx={'scan_id':wifi_scan.id, 'refresh_after': 1000*wifi_scan.duration_s}
+    if testcase:
+        return ctx
     
     return render(request, 'aircrack_ng_broker/wifi_scan_loading.html', {'scan_id':wifi_scan.id, 'refresh_after': 1000*wifi_scan.duration_s})
     
@@ -150,12 +164,12 @@ def ng_wifi_scan_stop(request):
         message=messages.error(request, "Must select a scan to stop, no scan_id in request params")
         return redirect('ng_wifi_previous_scans')
     wfscan = Wifi_Scan.objects.filter(id=scan_id).first()
-    # global SCAN_MAP
     print("printing scan map")
-    for key, item in SCAN_MAP.items():
-        print(key)
-        print(item)
-    proc = SCAN_MAP[wfscan]
+    try:
+        proc = SCAN_MAP[wfscan]
+    except:
+        message=messages.error(request, "Could not find scan process to stop")
+        return redirect('ng_wifi_previous_scans')   
     # return redirect('home')
     return scan_loading_finished(request, wfscan, proc)
     
@@ -163,69 +177,71 @@ def ng_wifi_scan_stop(request):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - view utils
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def util_show_scan_results(request, scan_id):
+def util_show_scan_results(request, scan_id, testcase=False):
     
     # Get results from django db
     beaconResults=Wifi_Scan_Beacon_Result.objects.all().filter(module_session_captured__id=scan_id)
     stationResults=Wifi_Scan_Station_Result.objects.all().filter(module_session_captured__id=scan_id)
+    ctx={"beaconResults":beaconResults, "stationResults": stationResults}
+    if testcase:
+        return ctx
     
-    return render(request, 'aircrack_ng_broker/wifi_scan_results.html', {"beaconResults":beaconResults, "stationResults": stationResults})
+    return render(request, 'aircrack_ng_broker/wifi_scan_results.html', ctx)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - Devices
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def get_wifi_devices():
-    """
-    uses airmon-ng to find available devices for scan
-    """
-    # Run airmon
-    p = subprocess.run(["sudo", "airmon-ng"], capture_output=True, text=True)    
-    # Parse output
-    return parse_airmon_ng_console_output(p.stdout)
+# def get_wifi_devices(testcase=False):
+#     """
+#     uses airmon-ng to find available devices for scan
+#     """
+#     # Run airmon
+#     p = subprocess.run(["sudo", "airmon-ng"], capture_output=True, text=True)    
+#     # Parse output
+#     return parse_airmon_ng_console_output(p.stdout)
 
-def parse_airmon_ng_console_output(consoleOutput: str, skip=3, up_to_minus=2, separator="\t"):
-    """
-    This can be used to parse the console output from airmon-ng, which has the following schema:
-    '''HEADERS \n  [<Entries>]'''
-    each <Entries> has PHY, Interface, '', Driver, Chipset, TAB separated when in normal mode
-    the '' entry isnt present in monitor mode. This is handled accordingly
-    """
-    result=[]
-    entries = consoleOutput.split("\n")[skip:-up_to_minus]
-    for e in entries:
-        vals=e.split(separator)
-        if len(vals) == 4:
-            result.append(
-                {
-                    "Phy":vals[0],
-                    "Interface":vals[1],
-                    "Driver":vals[2],
-                    "Chipset":vals[3]
-                }
-            )
-        elif len(vals) == 5 and vals[2] == '':
-            result.append(
-                {
-                    "Phy":vals[0],
-                    "Interface":vals[1],
-                    "Driver":vals[3],
-                    "Chipset":vals[4]
-                }
-            )
-        else:
-            raise "unexpected format in airmon-ng console output, check validation schema"
-    return result
+# def parse_airmon_ng_console_output(consoleOutput: str, skip=3, up_to_minus=2, separator="\t"):
+#     """
+#     This can be used to parse the console output from airmon-ng, which has the following schema:
+#     '''HEADERS \n  [<Entries>]'''
+#     each <Entries> has PHY, Interface, '', Driver, Chipset, TAB separated when in normal mode
+#     the '' entry isnt present in monitor mode. This is handled accordingly
+#     """
+#     result=[]
+#     entries = consoleOutput.split("\n")[skip:-up_to_minus]
+#     for e in entries:
+#         vals=e.split(separator)
+#         if len(vals) == 4:
+#             result.append(
+#                 {
+#                     "Phy":vals[0],
+#                     "Interface":vals[1],
+#                     "Driver":vals[2],
+#                     "Chipset":vals[3]
+#                 }
+#             )
+#         elif len(vals) == 5 and vals[2] == '':
+#             result.append(
+#                 {
+#                     "Phy":vals[0],
+#                     "Interface":vals[1],
+#                     "Driver":vals[3],
+#                     "Chipset":vals[4]
+#                 }
+#             )
+#         else:
+#             raise "unexpected format in airmon-ng console output, check validation schema"
+#     return result
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - Scanning
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def ng_wifi_scan(scanObj: Wifi_Scan):
+def ng_wifi_scan(scanObj: Wifi_Scan, testcase=False):
     """
     Uses airmon/airodump to scan wifi.
     Returns error (bool), error message (str), scan
     """
     # Unpack details
     interface_name=scanObj.interface
-    scan_time=scanObj.duration_s
     
     # time stamp & filename
     ts=datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
@@ -234,9 +250,10 @@ def ng_wifi_scan(scanObj: Wifi_Scan):
     filePathPattern=f'{filePathPrefix}*'
     
     # First start interface monitoring, no effect if alreay in monitor mode
-    monitor_on = subprocess.run(["sudo", "airmon-ng", "start", interface_name])
-    if monitor_on.returncode != 0:
-        return True, f"Could not set {interface_name} to monitor"
+    if not testcase:
+        monitor_on = subprocess.run(["sudo", "airmon-ng", "start", interface_name])
+        if monitor_on.returncode != 0:
+            return True, f"Could not set {interface_name} to monitor"
     monitor_interface=interface_name+"mon" if interface_name[-3:] != "mon" else interface_name
     
     scanObj.monitor_interface=monitor_interface
@@ -244,16 +261,17 @@ def ng_wifi_scan(scanObj: Wifi_Scan):
     scanObj.save()
     
     # Run scan, need to use popen as command wont exit
-    scanProc=subprocess.Popen(["sudo", "airodump-ng", monitor_interface, "-w", filePathPrefix, "--output-format", "csv"], 
+    if not testcase:
+        scanProc=subprocess.Popen(["sudo", "airodump-ng", monitor_interface, "-w", filePathPrefix, "--output-format", "csv"], 
                               close_fds=True)
+    else:
+        scanProc=testScanProc()
     
     # Add to map for tracking
-    # global SCAN_MAP
     SCAN_MAP[scanObj]=scanProc
-    print(f"added id: {scanObj} to map") 
     return False, None
 
-def scan_loading_finished(request, scanObj, scanProc):
+def scan_loading_finished(request, scanObj, scanProc, testcase=False):
     
     # time.sleep(scan_time)
     # End scan once duration reached
@@ -266,18 +284,21 @@ def scan_loading_finished(request, scanObj, scanProc):
     scanObj.save()
     
     # Reset monitor
-    subprocess.run(["sudo", "airmon-ng", "stop", scanObj.monitor_interface])
+    if not testcase:
+        subprocess.run(["sudo", "airmon-ng", "stop", scanObj.monitor_interface])
     
     # Read & Save results
     resultFilePath = [f for f in glob.glob(scanObj.filePathPattern)]
-    assert len(resultFilePath)==1, f"tmp dir must not have been cleaned, multiple scan files found matching pattern: {scanObj.filePathPattern}"
+    assert len(resultFilePath)==1, f"tmp dir must not have been cleaned, multiple (or no) scan files found matching pattern: {scanObj.filePathPattern}"
     resultFilePath=resultFilePath[0]
     with open(resultFilePath, "r") as resFile:
         results=resFile.read()
     # Save scan results
-    saveAiroDumpResults(results, scanObj)
+    beaconResults, stationResults = saveAiroDumpResults(results, scanObj)
     # Clean tmp file
     os.remove(resultFilePath)
+    if testcase:
+        return beaconResults, stationResults
     return util_show_scan_results(request, scanObj.id)
 
 def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
@@ -298,6 +319,7 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
         stationEntries=None
         
     # Save Beacons (read from index 2 to remove blank line and header)
+    beaconResults=[]
     for beaconEntry in beaconEntries.split('\n')[2:]:
         if len(beaconEntry) != 0:
             elements=[elem.lstrip() for elem in beaconEntry.split(",")]
@@ -321,8 +343,10 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                     key=elements[14],
                 )
                 beaconResult.save()
+                beaconResults.append(beaconResult)
         
     # Save Stations
+    stationResults=[]
     if stationEntries is not None:
         for stationEntry in stationEntries.split('\n'):
             if len(stationEntry) != 0:
@@ -339,5 +363,14 @@ def saveAiroDumpResults(results: str, scanObj: Wifi_Scan):
                         probed_essids=elements[6:]
                     )
                     stationResult.save()
+                    stationResults.append(stationResult)
+    return beaconResults, stationResults
 
-
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+# UTILS - Dependency injection for testing scanning interface
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+class testScanProc():
+    def terminate(self):
+        pass
+    def kill(self):
+        pass

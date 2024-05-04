@@ -3,17 +3,19 @@ import subprocess
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - Wifi Devices (using airmon-ng)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-def get_wifi_interfaces()->[str]:
+def get_wifi_interfaces(testcase=False)->[str]:
     """
     uses airmon-ng to find wifi interfaces (name only)
     """
-    devices=get_wifi_devices()
+    devices=get_wifi_devices(testcase)
     return [d["Interface"] for d in devices]
 
-def get_wifi_devices()->[dict]:
+def get_wifi_devices(testcase=False)->[dict]:
     """
     uses airmon-ng to find available devices (each device is a dict of info) for scan
     """
+    if testcase:
+        return [{"Phy":"TestPhy","Interface":"TestInterface","Driver":"TestDriver","Chipset":"TestChipset"}]
     # Run airmon
     p = subprocess.run(["sudo", "airmon-ng"], capture_output=True, text=True)    
     # Parse output
