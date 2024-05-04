@@ -2,7 +2,7 @@ from django.test import TestCase
 from lelantos_base.models import AbstractModelResultsTestClass
 # from django.utils import timezone
 from django.http import HttpRequest
-from lelantos_base.tests.testModels import testDataPrep
+from lelantos_base.tests.tests import testDataPrep
 from django.test import Client
 
 # Functions to test
