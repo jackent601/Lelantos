@@ -1,14 +1,9 @@
 from django.test import TestCase
-from django.contrib.auth.models import User
-from lelantos_base.models import AbstractModelResultsTestClass #, Module_Session, Location, Session
+from lelantos_base.models import AbstractModelResultsTestClass
 # from django.utils import timezone
 from django.http import HttpRequest
 from lelantos_base.tests.testModels import testDataPrep
 from django.test import Client
-
-from django.contrib import messages
-# from django.apps import apps
-from django.http import HttpResponse
 
 # Functions to test
 from analysis.views import getContextFromRequestAndValidate, renderAPIContext, analysis_by_model_results, model_network_context, getScaledNetworkGraph

@@ -1,0 +1,104 @@
+#!/bin/bash
+_usage() {
+cat << EOF
+  ${0} [MODEL] [OPTIONS]
+
+  Django tests
+
+  MODEL: run specified model tests, default is all.
+    all         all
+    base        lelantos_base
+    analysis    analysis
+    auth        portal_auth
+    scan        aircrack_ng_broker
+    cp          wifiphisher_broker
+    
+
+  OPTIONS
+    --cover     include cover profiles
+
+
+EOF
+}
+
+# Count all of the args passed into the script and continue looping while we have args.
+position=0
+model="all"
+while [[ "${#}" -gt 0 ]]; do
+case "${1}" in
+    -h|--help|help)
+    _usage
+    exit 0
+    ;;
+    --cover)
+    cover=true
+    shift 
+    ;;
+    # We've handled all of our flags, now it's onto anything else (the positional args).
+    *)
+    # Determine which position we're at (this value defaults to 0 earlier in the script).
+    case "${position}" in
+        0)
+        model="${1}"
+        position=1
+        shift
+        ;;
+        1)
+        printf "Unknown argument: %s\n\n" "${1}" >&2
+        _usage >&2
+        exit 1
+        ;;
+    esac
+    ;;
+esac
+done
+
+# validate
+if [[ "$model" != "all" && "$model" != "base" && "$model" != "auth" && "$model" != "analysis" && "$model" != "scan" && "$model" != "cp" ]];then
+    _usage
+    echo "unrecognised model: $model"
+    exit 1
+fi
+
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+
+if [[ "$model" == "all" || "$model" == "base" ]];then
+    echo ""
+    echo "---------------------------------------------------------------------"
+    echo "= = = = = = = = = = lelantos_base Models  = = = = = = = = = = = = = = "
+    if [[ "$cover" == "true" ]];then
+        coverage run --source=lelantos_base manage.py test -v 0 lelantos_base.tests
+        coverage report --omit lelantos_base/management/*,lelantos_base/migrations/*
+    else
+        $pythonInterpreter manage.py test -v 0 lelantos_base.tests
+    fi
+fi
+
+if [[ "$model" == "all" || "$model" == "auth" ]];then
+    echo ""
+    echo "---------------------------------------------------------------------"
+    echo "= = = = = = = = = = = = Portal Auth = = = = = = = = = = = = = = = = = "
+    if [[ "$cover" == "true" ]];then
+        coverage run --source=portal_auth manage.py test -v 0 portal_auth.tests 
+        coverage report --omit portal_auth/migrations/*,
+    else
+        $pythonInterpreter manage.py test -v 0 portal_auth.tests
+    fi
+fi
+
+if [[ "$model" == "all" || "$model" == "analysis" ]];then
+    echo ""
+    echo "---------------------------------------------------------------------"
+    echo "= = = = = = = = = = = = = Analysis  = = = = = = = = = = = = = = = = = "
+    if [[ "$cover" == "true" ]];then
+        coverage run --source=analysis manage.py test -v 0 analysis.tests 
+        coverage report --omit analysis/migrations/*,
+    else
+        $pythonInterpreter manage.py test -v 0 analysis.tests
+    fi
+fi
+

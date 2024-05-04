@@ -11,7 +11,7 @@ import portal_auth.utils as auth_utils
 
 
 
-def login_user(request: HttpRequest):
+def login_user(request: HttpRequest, include_messages=True):
     # Catch first visit
     if request.method != "POST":
         return render(request, "portal_auth/login.html")
@@ -23,13 +23,15 @@ def login_user(request: HttpRequest):
     
     # Catch invalid creds
     if _user is None:
-        message=messages.error(request, "Invalid login credentials.")
+        if include_messages:
+            message=messages.error(request, "Invalid login credentials.")
         return redirect('login')
     
     # Log user in & add home-screen message
     login(request, _user)
     _ = auth_utils.start_new_session_for_user(request, _user)
-    message=messages.success(request, "login succesful, please set session location")
+    if include_messages:
+        message=messages.success(request, "login succesful, please set session location")
     
     # redirect based on user
     if _user.username==MOCK_DATA_USERNAME:
@@ -39,13 +41,14 @@ def login_user(request: HttpRequest):
 
 
 
-def logout_user(request: HttpRequest):
+def logout_user(request: HttpRequest, include_messages=True):
     if request.user.is_authenticated:
         # Get user's active session
         _user = request.user
         qs = Session.objects.all().filter(user=_user, active=True)
         if len(qs) > 1:
-            message=messages.error(request, "Multiple sessions were detected, all were closed")
+            if include_messages:
+                message=messages.error(request, "Multiple sessions were detected, all were closed")
         # Gracefully shutdown and move to inactive (not deleted to maintain audit log)
         for session in qs:
             # Shutdown all possile module processes running
@@ -53,9 +56,11 @@ def logout_user(request: HttpRequest):
             for s in moduleSessions:
                 ended=s.end_module_session()
                 if ended:
-                    message=messages.success(request, f"Stopped module (pid: {s.pid})")
+                    if include_messages:
+                        message=messages.success(request, f"Stopped module (pid: {s.pid})")
                 else:
-                    message=messages.error(request, 
+                    if include_messages:
+                        message=messages.error(request, 
                                            f"Failed to stop module (pid: {s.pid}), process may have had faulty start, or need manual shutdown")
             
             # End session
@@ -64,52 +69,13 @@ def logout_user(request: HttpRequest):
             session.save()
         logout(request)
         timestamp=timezone.now().strftime("%m/%d/%Y - %H:%M:%S")
-        message=messages.success(request, f"logged out, {timestamp}")
+        if include_messages:
+            message=messages.success(request, f"logged out, {timestamp}")
         return redirect('home')
     else:
-        message=messages.error(request, "You are not logged in, cannot log out")
+        if include_messages:
+            message=messages.error(request, "You are not logged in, cannot log out")
         return redirect('home')
-    
-    
-# Utils
-# def get_session_from_request(request: HttpRequest, error_msg="You must be logged in to access this"):
-#     """
-#     gets all active sessions associated with a user from request
-#     return:
-#         Session                - session, if found
-#         HttpResponse(Redirect) - optional, if session invalid
-#         Bool                   - error, if invalid
-#     """
-#     # Catch Invalid
-#     if not request.user.is_authenticated:
-#         message=messages.error(request, error_msg)
-#         return None, redirect('home'), True
-    
-#     # Valid user, get session
-#     active_sessions = Session.objects.all().filter(user=request.user, active=True).first()
-#     return active_sessions, None, False
-
-# def start_new_session_for_user(request: HttpRequest, user: User)->Session:
-#     """
-#     Creates a new session for a user from a request. Also sets any existing session to inactive.
-#     A user should only ever have 1 active session at a time
-#     returns:
-#         Session    - None if error
-#     """
-#     # Close existing sessions
-#     qs = Session.objects.all().filter(user=user, active=True)
-#     if len(qs) > 0:
-#         for session in qs:
-#             session.active=False
-#             session.end_time=timezone.now()
-#             session.save()
-#     # Now create new sessions
-#     _src_ip=request.META["REMOTE_ADDR"]
-#     _start_time=timezone.now()
-#     _session_id=get_new_valid_session_id()
-#     session=Session(user=user, session_id=_session_id, src_ip=_src_ip, start_time=_start_time, active=True)
-#     session.save()  
-#     return session
     
         
     

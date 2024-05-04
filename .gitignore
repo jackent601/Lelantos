@@ -19,12 +19,14 @@ utils/__pycache__/*
 # Auth module
 portal_auth/__pycache__/*
 portal_auth/migrations/__pycache__/*
+portal_auth/tests/__pycache__/*
 
 # Wifi-sniffing (aircrack-ng)
 aircrack_ng_broker/__pycache__/*
 aircrack_ng_broker/migrations/*
 aircrack_ng_broker/migrations/__pycache__/*
 aircrack_ng_broker/scan_results/tmp/*
+aircrack_ng_broker/tests/__pycache__/*
 
 # database
 *.sqlite3
@@ -35,6 +37,7 @@ wifiphisher_broker/migrations/*
 wifiphisher_broker/migrations/__pycache__/*
 wifiphisher_broker/logs/temp/*
 wifiphisher_broker/logs/*
+wifiphisher_broker/tests/__pycache__/*
 
 # Analysis
 analysis/__pycache__/*
