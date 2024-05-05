@@ -17,6 +17,11 @@ from django.utils import timezone
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+import logging
+import sys
+
+if len(sys.argv) > 1 and sys.argv[1] == 'test':
+    LOGGING_CONFIG = None
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
