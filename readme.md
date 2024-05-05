@@ -1,4 +1,4 @@
-![Alt text](lelantos_base/static/lelantos_base/imgs/lelantos-about.jpg?raw=true "Title")
+![Alt text](lelantos_base/static/lelantos_base/imgs/lelantos-about.png?raw=true "Title")
 
 ## Requirements
 
