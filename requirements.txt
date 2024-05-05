@@ -1,3 +1,18 @@
-Django
-Folium
-osgeo
+git+https://github.com/nikolas/django.git
+#Django
+
+# Mapping tools
+plotly=5.22.0
+Folium=0.16.0
+#osgeo
+gdal==3.3.0
+
+# API
+django-extensions==3.2.3
+djangorestframework==3.15.1
+
+# for creating test data only
+pandas=2.2.2
+
+# network graphs
+networkx=3.3

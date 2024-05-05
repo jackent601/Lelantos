@@ -1,0 +1,28 @@
+#!/bin/bash
+pythonInterpreter=python
+command -v python
+if [[ "$?" -ne 0 ]];then
+    pythonInterpreter=python3
+fi
+
+# install geo-data extensions
+sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev
+
+# Create and active virtual pytohn environment
+$pythonInterpreter -m venv .lelantos-venv
+source .lelantos-venv/bin/activate
+
+# install requirements into environment
+$pythonInterpreter -m pip intall -r requirements.txt
+
+# Prime database
+./helpers/resetDB
+
+# Create mock data
+./helpers/_createMockData
+
+# create guest user (skips if already created)
+./helpers/_createGuestUser
+
+# start server
+./helpers/_runServer
