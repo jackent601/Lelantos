@@ -1,19 +1,17 @@
 #!/bin/bash
-pythonInterpreter=python
-command -v python
-if [[ "$?" -ne 0 ]];then
-    pythonInterpreter=python3
-fi
 
 # install geo-data extensions
-sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev
+sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev g++
+
+# install python additionals
+sudo apt-get install python3.12-venv python3-dev 
 
 # Create and active virtual pytohn environment
-$pythonInterpreter -m venv .lelantos-venv
+python3 -m venv .lelantos-venv
 source .lelantos-venv/bin/activate
 
 # install requirements into environment
-$pythonInterpreter -m pip intall -r requirements.txt
+python3 -m pip intall -r requirements.txt
 
 # Prime database
 ./helpers/resetDB
