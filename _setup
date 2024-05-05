@@ -2,6 +2,7 @@
 
 # install geo-data extensions
 sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev g++
+sudo apt-get install libsqlite3-mod-spatialite
 
 # install python additionals
 sudo apt-get install python3.12-venv python3-dev 

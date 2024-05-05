@@ -35,8 +35,8 @@ aircrack_ng_broker/tests/__pycache__/*
 wifiphisher_broker/__pycache__/*
 wifiphisher_broker/migrations/*
 wifiphisher_broker/migrations/__pycache__/*
-wifiphisher_broker/logs/temp/*
-wifiphisher_broker/logs/*
+# wifiphisher_broker/logs/temp/*
+# wifiphisher_broker/logs/*
 wifiphisher_broker/tests/__pycache__/*
 
 # Analysis

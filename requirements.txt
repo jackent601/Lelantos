@@ -1,5 +1,5 @@
-git+https://github.com/nikolas/django.git
-#Django
+# git+https://github.com/nikolas/django.git if spatialite version clash with django
+Django
 
 # Mapping tools
 plotly==5.22.0
