@@ -6,7 +6,8 @@
 
 ## Installation
 
-- clone this repo
-- source _setup
-
+- clone this repo and move into it
+```
+source _setup
+```
 Get hacking!
