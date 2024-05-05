@@ -102,6 +102,9 @@ class Location(gisModels.Model):
     @classmethod
     def getModelUniqueIdentifierPatternString(self):
         return ""
+    
+    def __str__(self):
+        return f"Location: {self.location.wkt}, name: {self.name} area: {self.area}, remarks: {self.remarks}"
 
 """
     Allows tracking of arbitrary linux processes for modules

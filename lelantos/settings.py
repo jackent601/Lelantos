@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from django.utils import timezone
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -166,3 +167,31 @@ folium_colours = ["red",
                   "gray",
                   "black",
                   "lightgray"]
+
+# Logging
+logPath=f"./logs/lelantos_log_{timezone.now()}.log"
+LOGGING = {
+    "version": 1,  # the dictConfig format version
+    "disable_existing_loggers": False,  # retain the default loggers
+    "formatters": {
+            "verbose": {
+                "format": "{levelname} {asctime} {module} MSG: {message}",
+                "style": "{",
+            },
+            "simple": {
+                "format": "{levelname} {message}",
+                "style": "{",
+            },
+    },
+    "handlers": {
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": logPath,
+            "formatter":"verbose"
+        },
+    },
+    "root": {
+        "handlers": ["file"],
+        "level": "DEBUG",
+    },
+}

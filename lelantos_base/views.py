@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpRequest
-from django.utils import timezone
+from django.http import HttpRequest
 from django.contrib import messages
 from lelantos_base.models import Location 
 from lelantos_base.forms import LocationEntryForm
 import portal_auth.utils as auth_utils
+
+# logging
+import logging
+logger = logging.getLogger(__name__)
 
 
 def home(request: HttpRequest):
@@ -39,6 +42,7 @@ def addLocation(request: HttpRequest):
             remarks = request.POST['remarks']
             )
         new_place.save()
+        logger.debug(f"location: {new_place}, saved for user: {active_session.user}")
         message=messages.success(request, "Location set!")
         return render(request, "lelantos_base/home.html")
     else:
