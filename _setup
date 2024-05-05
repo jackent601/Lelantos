@@ -17,6 +17,9 @@ python3 -m pip install -r requirements.txt
 # Prime database
 ./helpers/resetDB
 
+# Run tests
+./helpers/_test
+
 # Create mock data
 ./helpers/_createMockData
 
