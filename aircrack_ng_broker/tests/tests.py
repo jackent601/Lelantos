@@ -10,6 +10,10 @@ from django.conf import settings
 import os
 from shutil import copyfile
 
+# disable logging
+import logging
+logging.disable(logging.CRITICAL)
+
 # Functions to test
 import aircrack_ng_broker.views as ng_views
 
