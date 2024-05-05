@@ -1,21 +1,12 @@
-## To Do 
+![Alt text](lelantos_base/static/lelantos_base/imgs/lelantos-about.jpg?raw=true "Title")
 
-- [ ] start wp3 automatically, and option to shut down/attempt to restart
+## Requirements
 
-- [ ] tidy where temp scan files stored and naming
+- python3 (most features compatible with lower versions but start-up script requires python3)
 
-- [ ] progress bar for tasks (particularly scanning tasks), actually quite complicated
+## Installation
 
+- clone this repo
+- source _setup
 
-
-
-
-
-
-
-
-
-
-
-
-- [ ] Start writing!
+Get hacking!
