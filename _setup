@@ -12,7 +12,7 @@ python3 -m venv .lelantos-venv
 source .lelantos-venv/bin/activate
 
 # install requirements into environment
-python3 -m pip intall -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 # Prime database
 ./helpers/resetDB
