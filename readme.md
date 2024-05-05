@@ -10,4 +10,9 @@
 ```
 source _setup
 ```
+
+This will automatically start up the command and control server running on port 8000
+
+Visit http://[IP]:8000/home/
+
 Get hacking!
