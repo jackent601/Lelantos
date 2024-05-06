@@ -3,16 +3,19 @@ _usage() {
 cat << EOF
   ${0} [OPTIONS]
 
-  Install all Lelantos dependencies, and start the server
+  Install all Lelantos dependencies, plug-ins and start the server. Not all OS are compatible
+  with the lelantos-plugins so OS OPTIONS are provided as shortcuts.
 
   OPTIONS
     --ec2                ec2 instance handle python-management settings
-    --wp                 install wifiphisher
-    --ng                 install aircrack-ng
-    --lelantos           install lelantos (useful if not installing wp, ng as they are not compatible on
-                         all platforms but lelantos can run without these plug-ins)
-    --all                default: install everything
-    --start              start lelantos server after installation (including adding test data)
+    --wp                 include install wifiphisher
+    --ng                 include install aircrack-ng
+    --lelantos           include install lelantos
+    --start              start server after installation (with mock data and guest user)
+
+  OS OPTIONS
+    --kali               installs both plugin utilities and lelantos (--wp --ng --lelantos --start)
+    --ubuntu             installs only aircrack-ng utility and lelantos (--ng --lelantos --start)
 
 
 EOF
@@ -20,7 +23,7 @@ EOF
 
 # Count all of the args passed into the script and continue looping while we have args.
 position=0
-mode="all"
+mode="kali"
 while [[ "${#}" -gt 0 ]]; do
 case "${1}" in
     -h|--help|help)
@@ -43,8 +46,12 @@ case "${1}" in
     mode=lelantos
     shift 
     ;;
-    --all)
+    --kali)
     mode=all
+    shift 
+    ;;
+    --ubuntu)
+    mode=ubuntu
     shift 
     ;;
     --start)
@@ -136,19 +143,19 @@ startLelantos(){
     ./helpers/_runServer
 }
 
-if [[ "$mode" == "all" || "$mode" == "wp" ]];then
+if [[ "$mode" == "kali" || "$mode" == "wp" ]];then
     echo = = = = = = = = = = = = = Wifi-phisher installation = = = = = = = = = = = = = = = =
     installWifiPhisher
     echo = = = = = = = = = = = = = Wifi-phisher installated = = = = = = = = = = = = = = = = =
 fi
 
-if [[ "$mode" == "all" || "$mode" == "ng" ]];then
+if [[ "$mode" == "kali" || "$mode" == "ng" || "$mode" == "ubuntu" ]];then
     echo = = = = = = = = = = = = = Wifi-phisher installation = = = = = = = = = = = = = = = =
     installAircrackNg
     echo = = = = = = = = = = = = = Wifi-phisher installated = = = = = = = = = = = = = = = = =
 fi
 
-if [[ "$mode" == "all" || "$mode" == "lelantos" ]];then
+if [[ "$mode" == "kali" || "$mode" == "lelantos" || "$mode" == "ubuntu" ]];then
     echo = = = = = = = = = = = = = = = Lelantos installation = = = = = = = = = = = = = = = = = 
     installLelantosBase
     echo = = = = = = = = = = = = = = = = Lelantos installed = = = = = = = = = = = = = = = = = = 
