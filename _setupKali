@@ -1,0 +1,160 @@
+#!/bin/bash
+_usage() {
+cat << EOF
+  ${0} [OPTIONS]
+
+  Install all Lelantos dependencies, and start the server
+
+  OPTIONS
+    --ec2                ec2 instance handle python-management settings
+    --wp                 install wifiphisher
+    --ng                 install aircrack-ng
+    --lelantos           install lelantos (useful if not installing wp, ng as they are not compatible on
+                         all platforms but lelantos can run without these plug-ins)
+    --all                default: install everything
+    --start              start lelantos server after installation (including adding test data)
+
+
+EOF
+}
+
+# Count all of the args passed into the script and continue looping while we have args.
+position=0
+mode="all"
+while [[ "${#}" -gt 0 ]]; do
+case "${1}" in
+    -h|--help|help)
+    _usage
+    exit 0
+    ;;
+    --ec2)
+    ec2=true
+    shift 
+    ;;
+    --ng)
+    mode=ng
+    shift 
+    ;;
+    --wp)
+    mode=wp
+    shift 
+    ;;
+    --lelantos)
+    mode=lelantos
+    shift 
+    ;;
+    --all)
+    mode=all
+    shift 
+    ;;
+    --start)
+    start=true
+    shift 
+    ;;
+    # We've handled all of our flags, now it's onto anything else (the positional args).
+    *)
+    printf "Unknown argument: %s\n\n" "${1}" >&2
+    _usage >&2
+    exit 1
+    ;;
+esac
+done
+
+# Update kali
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# Install exploit tools
+if [[ "ec2" == "true" ]];then
+    sudo rm /usr/lib/python*/EXTERNALLY-MANAGED*
+fi
+
+installWifiPhisher(){
+    # = = = = = = = = = = = = = Wifi-phisher installation = = = = = = = = = = = = = = = =
+    # Ensure pip installed
+    sudo apt-get -y install python3-pip
+    # get base dependencies
+    sudo apt-get install -y python3-setuptools libnl-3-dev libnl-genl-3-dev libssl-dev
+    sudo apt-get install -y dnsmasq
+    sudo apt-get install -y libnl-3-dev libnl-genl-3-dev
+    # Download the latest revision
+    cd ./../
+    git clone https://github.com/wifiphisher/wifiphisher.git 
+    cd wifiphisher # Switch to tool's directory
+    # get specific setup tool package (this is fine as lelantos runs in a venv)
+    # https://github.com/open-mmlab/mmdetection/issues/1677#issuecomment-1868732038
+    sudo pip uninstall setuptools
+    sudo pip uninstall ujson
+    curl https://files.pythonhosted.org/packages/69/77/aee1ecacea4d0db740046ce1785e81d16c4b1755af50eceac4ca1a1f8bfd/setuptools-60.5.0.tar.gz > setuptools-60.5.0.tar.gz
+    tar -xzvf setuptools-60.5.0.tar.gz
+    cd setuptools-60.5.0
+    sudo python3 setup.py install
+    sudo pip install ujson
+    # Install wifiphisher
+    cd ./../
+    sudo python3 setup.py install
+    # move back to lelantos
+    cd ./../Lelantos # move back to lelantos
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+}
+
+installAircrackNg(){
+    # = = = = = = = = = = = = = Wifi-phisher installation = = = = = = = = = = = = = = = =
+    sudo apt-get install -y aircrack-ng
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+}
+
+installLelantosBase(){
+    # = = = = = = = = = = = = = = = Lelantos installation = = = = = = = = = = = = = = = = = 
+    # Ensure pip installed
+    sudo apt-get -y install python3-pip
+    # ensure venv installed
+    sudo apt-get -y install python3-venv
+    # install geo-data extensions
+    sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev g++
+    sudo apt-get install libsqlite3-mod-spatialite
+    # install python additionals
+    sudo apt-get install python3.12-venv python3-dev 
+    # Create and active virtual pytohn environment
+    python3 -m venv .lelantos-venv
+    source .lelantos-venv/bin/activate
+    # install requirements into environment
+    python3 -m pip install -r requirements.txt
+    # Prime database
+    ./helpers/resetDB
+    # Run tests
+    ./helpers/_test
+}
+
+startLelantos(){
+    # = = = = = = = = = = = = = = = Starting Lelantos = = = = = = = = = = = = = = = = = 
+    # Create mock data
+    ./helpers/_createMockData
+    # create guest user (skips if already created)
+    ./helpers/_createGuestUser
+    # start server
+    ./helpers/_runServer
+}
+
+if [[ "$mode" == "all" || "$mode" == "wp" ]];then
+    echo = = = = = = = = = = = = = Wifi-phisher installation = = = = = = = = = = = = = = = =
+    installWifiPhisher
+    echo = = = = = = = = = = = = = Wifi-phisher installated = = = = = = = = = = = = = = = = =
+fi
+
+if [[ "$mode" == "all" || "$mode" == "ng" ]];then
+    echo = = = = = = = = = = = = = Wifi-phisher installation = = = = = = = = = = = = = = = =
+    installAircrackNg
+    echo = = = = = = = = = = = = = Wifi-phisher installated = = = = = = = = = = = = = = = = =
+fi
+
+if [[ "$mode" == "all" || "$mode" == "lelantos" ]];then
+    echo = = = = = = = = = = = = = = = Lelantos installation = = = = = = = = = = = = = = = = = 
+    installLelantosBase
+    echo = = = = = = = = = = = = = = = = Lelantos installed = = = = = = = = = = = = = = = = = = 
+fi
+
+if [[ "$start" == "true" ]];then
+    echo = = = = = = = = = = = = = = = Starting Lelantos = = = = = = = = = = = = = = = = = 
+    startLelantos
+fi
