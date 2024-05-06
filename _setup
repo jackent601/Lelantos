@@ -1,7 +1,7 @@
 #!/bin/bash
 _usage() {
 cat << EOF
-  ${0} [OPTIONS]
+  \$source ${0} [OPTIONS]
 
   Install all Lelantos dependencies, plug-ins and start the server. Not all OS are compatible
   with the lelantos-plugins so OS OPTIONS are provided as shortcuts.
@@ -47,7 +47,7 @@ case "${1}" in
     shift 
     ;;
     --kali)
-    mode=all
+    mode=kali
     shift 
     ;;
     --ubuntu)
