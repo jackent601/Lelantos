@@ -41,4 +41,4 @@ will create a fresh user to play with in the UI
 ./run
 ```
 will start up the command and control server running on port 8000
-Visit http://<IP>:8000/home/ and get hacking!
+Visit http://\<IP\>:8000/home/ and get hacking!
