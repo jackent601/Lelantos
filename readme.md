@@ -27,10 +27,18 @@ source _setup --ubuntu [--ec2, --start]
 ```
 ## Usage
 
---start in _setup and ./run will start up the command and control server running on port 8000
+```
+./helpers/_createMockData
+```
+will create test data to play with in the UI
 
-./helpers/_createMockData will create test data to play with in the UI
+```
+./helpers/_createGuestUser 
+```
+will create a fresh user to play with in the UI
 
-./helpers/_createGuestUser will create a fresh user to play with in the UI
-
+```
+./run
+```
+will start up the command and control server running on port 8000
 Visit http://<IP>:8000/home/ and get hacking!
