@@ -83,7 +83,6 @@ installWifiPhisher(){
     # get base dependencies
     sudo apt-get install -y python3-setuptools libnl-3-dev libnl-genl-3-dev libssl-dev
     sudo apt-get install -y dnsmasq
-    sudo apt-get install -y libnl-3-dev libnl-genl-3-dev
     # Download the latest revision
     cd ./../
     git clone https://github.com/wifiphisher/wifiphisher.git 

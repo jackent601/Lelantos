@@ -187,51 +187,6 @@ def util_show_scan_results(request, scan_id, ctx_only=False):
         return ctx
     
     return render(request, 'aircrack_ng_broker/wifi_scan_results.html', ctx)
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-# UTILS - Devices
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-# TODO - this has been moved to utils, delete code
-# def get_wifi_devices(ctx_only=False):
-#     """
-#     uses airmon-ng to find available devices for scan
-#     """
-#     # Run airmon
-#     p = subprocess.run(["sudo", "airmon-ng"], capture_output=True, text=True)    
-#     # Parse output
-#     return parse_airmon_ng_console_output(p.stdout)
-
-# def parse_airmon_ng_console_output(consoleOutput: str, skip=3, up_to_minus=2, separator="\t"):
-#     """
-#     This can be used to parse the console output from airmon-ng, which has the following schema:
-#     '''HEADERS \n  [<Entries>]'''
-#     each <Entries> has PHY, Interface, '', Driver, Chipset, TAB separated when in normal mode
-#     the '' entry isnt present in monitor mode. This is handled accordingly
-#     """
-#     result=[]
-#     entries = consoleOutput.split("\n")[skip:-up_to_minus]
-#     for e in entries:
-#         vals=e.split(separator)
-#         if len(vals) == 4:
-#             result.append(
-#                 {
-#                     "Phy":vals[0],
-#                     "Interface":vals[1],
-#                     "Driver":vals[2],
-#                     "Chipset":vals[3]
-#                 }
-#             )
-#         elif len(vals) == 5 and vals[2] == '':
-#             result.append(
-#                 {
-#                     "Phy":vals[0],
-#                     "Interface":vals[1],
-#                     "Driver":vals[3],
-#                     "Chipset":vals[4]
-#                 }
-#             )
-#         else:
-#             raise "unexpected format in airmon-ng console output, check validation schema"
-#     return result
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 # UTILS - Scanning
